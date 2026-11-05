@@ -183,3 +183,19 @@ Les fiches renvoient vers les pièces du DCE correspondant à leur zone et à le
 | « Action refusée » | L'e-mail n'est pas éditeur | L'ajouter dans `membres` avec le rôle `editeur` |
 | « Accès réservé » sur un plan | L'e-mail n'est pas dans `membres` | L'ajouter comme `lecteur` ou `editeur` |
 | La 3D ne s'affiche pas | Navigateur sans WebGL | Le plan de repérage reste disponible dans « Localisation » |
+
+
+## Jumeau énergétique (`energie/`)
+
+Page de nuit qui montre, logement par logement, les consommations de la première année d'exploitation (1er octobre 2027 → 30 septembre 2028), les alertes, la comparaison tour A1 (conception DCE) / tour A2 (variante RE2020 de la maquette) et le coût global sur 50 ans.
+
+| Partie | Où | D'où ça vient |
+|---|---|---|
+| 129 logements (typologie, SHAB, position) | `data/energie/logements.json` | Voiles séparatifs radiaux de la maquette + tableau des surfaces ind. A. Numérotation : A2 d'après les portes « A2 PO R5-Lx », A1 d'après le logement témoin A1.31 |
+| Séries journalières (chauffage, eau chaude, eau, électricité) | `data/energie/series.json` | **Fictif** : scénario simulé, calé sur des hypothèses (chauffage A1 36 kWh/m², A2 −30 %) |
+| Sous-stations, ventilation, solaire, alertes, hypothèses de prix | `data/energie/jumeau.json` | Prix et CO₂ : sources publiques citées dans le fichier ; anomalies injectées, détection par règles (R1 à R5) |
+| Volet « Énergie » des fiches | `data/energie/ouvrages.json` + `assets/js/energie-fiche.js` | CCTP 301, 309, 402, 417, 502, étude thermique citée, variante A2 de la maquette |
+
+Régénérer : `python tools/build_energie.py` (aucune dépendance). Pour passer aux vraies données, remplacer la fonction `simulate()` par la lecture des exports de télé-relève (un fichier par compteur, un relevé par jour) en gardant le même format de sortie ; les règles de détection s'appliquent telles quelles.
+
+Hypothèses à confirmer par l'étude énergétique : gains de la variante A2, rendement solaire (30 %), rendement de récupération des CTA (82 %), consommation des ventilateurs, évolution des prix. Elles sont modifiables dans la page (bloc « Coût global ») et dans l'en-tête du générateur.

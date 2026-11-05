@@ -1,5 +1,6 @@
 // Passeport numérique d'ouvrage : rendu de la page à partir de data/o/<REF>.json, data/commun.json et des données de suivi.
 import * as api from './backend.js';
+import { renderEnergieFiche } from './energie-fiche.js';
 
 const REF = (document.body.dataset.ref || new URLSearchParams(location.search).get('r') || '').trim();
 const CFG = window.PASSEPORT_CONFIG || {};
@@ -881,6 +882,8 @@ async function main() {
   wireSecNav();
   renderDynamic();
   await renderLocalisation();
+  renderEnergieFiche(REF, bind('energie')[0]).then(() => { if (location.hash === '#energie') document.getElementById('energie')?.scrollIntoView(); });
+  renderEnergieFiche(REF, bind('energie')[0]).then(() => { if (location.hash === '#energie') document.getElementById('energie')?.scrollIntoView(); });
   startViewer();
 
   if (api.configured()) {

@@ -618,3 +618,28 @@ li.empty { padding: 4px 0; }
   .ex-ref { font-size: 34px; }
   .ex-viewer .viewer-tools { bottom: 34px; }
 }
+
+/* ---------- volet Énergie ---------- */
+.fiab-cite { background: #e8eef0; color: #3d5560; }
+.fiab-cite::before { border: 1.5px solid #3d5560; border-radius: 2px; }
+.fiab-hypothese { background: #fbf3e4; color: #7a5410; border: 1px dashed #c9a46a; }
+.fiab-hypothese::before { display: none; }
+.fiab-row-hypothese::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: repeating-linear-gradient(0deg, #c9a46a 0 4px, transparent 4px 8px); }
+.en-logts { display: grid; gap: 8px; margin-top: 18px; }
+.en-logt {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 2px 14px; align-items: center; padding: 14px 16px; border-radius: var(--r-m);
+  background: #0f151b; color: #eef1f2; text-decoration: none; border: 1px solid #0f151b;
+}
+.en-logt:hover { border-color: var(--traceur); }
+.en-id { grid-row: span 2; font-family: var(--mark); font-size: 30px; line-height: 1; color: #f7a052; }
+.en-meta { font-size: 13.5px; color: #b8c1c7; }
+.en-val { font-size: 14.5px; font-weight: 600; }
+.en-val b { font-weight: 600; color: #b8c1c7; }
+.en-logt .fiab { grid-column: 3; grid-row: 1; justify-self: end; background: repeating-linear-gradient(-45deg, rgba(238,241,242,.16) 0 2px, transparent 2px 6px), #0f151b; color: #eef1f2; border-color: rgba(238,241,242,.3); }
+.en-go { grid-column: 3; grid-row: 2; font-size: 13px; color: #ff3d8b; font-weight: 650; white-space: nowrap; }
+.en-note { color: var(--ardoise); font-size: 14px; margin: 14px 0 0; }
+@media (max-width: 600px) { .en-logt { grid-template-columns: auto 1fr; } .en-logt .fiab, .en-go { grid-column: 1 / -1; grid-row: auto; justify-self: start; } }
+
+.btn-energie { background: #0f151b; color: #f7a052; border-color: #0f151b; }
+.btn-energie:hover { background: #1a232b; color: #ffc07a; }
+.btn-energie::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #f7a052; box-shadow: 0 0 10px #f7a052; }

@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jumeau énergétique — Domaine de Fontbelleau · Veck Construction</title>
+<meta name="description" content="Jumeau numérique énergétique du Domaine de Fontbelleau : consommations de chaque logement en 3D, alertes, comparaison de la tour A1 (conception DCE) et de la tour A2 (variante RE2020), coût global.">
+<meta name="theme-color" content="#0a0e12">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/archivo-wdth.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/bss-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/energie.css">
+<script type="importmap">{ "imports": { "three": "../assets/vendor/three.module.min.js" } }</script>
+<script type="module" src="../assets/js/energie.js"></script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h3.5v16H7zM13.5 4H17v16h-3.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1.2-3.6 2.3-4.6.3 1.6 1 2.6 2 2.9-.6-2.8.2-5.6.7-8.3z"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3.5c3.2 4.2 6 7.4 6 10.5a6 6 0 0 1-12 0c0-3.1 2.8-6.3 6-10.5z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/></symbol>
+    <symbol id="i-shower" viewBox="0 0 24 24"><path d="M4 20V8a4 4 0 0 1 8 0"/><path d="M8 11h8a4 4 0 0 0-8 0z"/><path d="M10 15v1M12 17v1M14 15v1M16 17v1M12 14v.5"/></symbol>
+    <symbol id="i-sum" viewBox="0 0 24 24"><path d="M17 5H7l5 7-5 7h10"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></symbol>
+    <symbol id="i-octagon" viewBox="0 0 24 24"><path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z"/><path d="M12 7.5v6M12 16.5v.3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.3"/></symbol>
+    <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M5 9.5a11 11 0 0 1 4.2-2.3M12 6.5a11 11 0 0 1 7 3M8 13a6 6 0 0 1 2.5-1.3M15.2 12.2A6 6 0 0 1 16 13"/><circle cx="12" cy="17.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-fan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8"/><path d="M12 10.2C11 6 12.5 3.5 15 3.8c2.5.3 2.2 3.8-3 6.4zM13.8 12c4.2-1 6.7.5 6.4 3s-3.8 2.2-6.4-3zM12 13.8c1 4.2-.5 6.7-3 6.4s-2.2-3.8 3-6.4zM10.2 12C6 13 3.5 11.5 3.8 9s3.8-2.2 6.4 3z"/></symbol>
+    <symbol id="i-network" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M7.3 11l9.4-4M7.3 13l9.4 4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-plan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6M12 12l-7.4 4.3"/></symbol>
+  </defs>
+</svg>
+<a class="skip" href="#jumeau">Aller au jumeau</a>
+
+<header class="topbar">
+  <a class="brand" href="../" title="Retour à la maquette du projet">
+    <img class="brand-logo" src="../assets/img/veck-construction-640-nuit.png" width="640" height="119" alt="Veck Construction">
+    <span class="brand-sep" aria-hidden="true"></span>
+    <span class="brand-text"><span class="brand-name">Fontbelleau</span><span class="brand-sub">Jumeau énergétique</span></span>
+  </a>
+  <span class="flag" title="Les consommations sont simulées pour la démonstration : première année d'exploitation après la livraison prévue au scénario du chantier.">Données simulées</span>
+  <nav class="top-links" aria-label="Autres vues">
+    <a class="btn btn-ghost" href="../"><svg class="ico"><use href="#i-layers"/></svg><span>Maquette du projet</span></a>
+    <a class="btn btn-ghost hide-s" href="#methode"><svg class="ico"><use href="#i-info"/></svg><span>Méthode</span></a>
+  </nav>
+</header>
+
+<main>
+  <section class="twin" id="jumeau" aria-label="Jumeau énergétique en 3D">
+    <div class="stage" id="stage">
+      <div class="stage-canvas" data-v="canvas"></div>
+      <div class="pins" data-v="pins" aria-hidden="true"></div>
+      <div class="hover-tip" data-v="tip" hidden></div>
+      <div class="stage-status" data-v="status" role="status">Chargement de la maquette</div>
+      <div class="stage-date" aria-live="polite">
+        <span class="sd-day" data-bind="date-day">—</span>
+        <span class="sd-meta"><span data-bind="date-temp"></span><span data-bind="date-mode"></span></span>
+      </div>
+      <div class="legend-ramp" data-bind="legend">
+        <span class="lr-title" data-bind="legend-title">Chauffage, kWh/m²</span>
+        <span class="lr-bar" data-bind="legend-bar"></span>
+        <span class="lr-ticks"><span data-bind="legend-min">0</span><span data-bind="legend-mid"></span><span data-bind="legend-max">—</span></span>
+      </div>
+      <div class="floors" role="group" aria-label="Étage affiché">
+        <button type="button" data-floor="0" aria-pressed="true" title="Tous les étages">Tout</button>
+        <button type="button" data-floor="9">R+9</button><button type="button" data-floor="8">R+8</button>
+        <button type="button" data-floor="7">R+7</button><button type="button" data-floor="6">R+6</button>
+        <button type="button" data-floor="5">R+5</button><button type="button" data-floor="4">R+4</button>
+        <button type="button" data-floor="3">R+3</button><button type="button" data-floor="2">R+2</button>
+        <button type="button" data-floor="1">R+1</button>
+      </div>
+      <div class="stage-tools" role="toolbar" aria-label="Vue 3D">
+        <button type="button" data-tower="ALL" aria-pressed="true">Deux tours</button>
+        <button type="button" data-tower="A1" aria-pressed="false">A1</button>
+        <button type="button" data-tower="A2" aria-pressed="false">A2</button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" data-act="plan" aria-pressed="false" title="Vue de dessus de l'étage choisi"><svg class="ico"><use href="#i-plan"/></svg><span>Plan</span></button>
+        <button type="button" data-act="reset" title="Vue d'ensemble"><svg class="ico"><use href="#i-target"/></svg><span class="vh-s">Vue d'ensemble</span></button>
+        <button type="button" data-act="fullscreen" title="Plein écran"><svg class="ico"><use href="#i-expand"/></svg><span class="vh-s">Plein écran</span></button>
+      </div>
+    </div>
+
+    <aside class="panel panel-left" aria-label="Indicateurs et réglages">
+      <div class="pl-head">
+        <p class="eyebrow">Première année d'exploitation · <span data-bind="period-label">1 oct. 2027 → 30 sept. 2028</span></p>
+        <h1 class="pl-title">Chaque logement,<br>chaque jour.</h1>
+        <p class="pl-lead">Les 129 logements de la maquette s'allument selon leur consommation relevée par leur module thermique et leur compteur électrique.</p>
+      </div>
+
+      <div class="ctrl" role="group" aria-label="Usage affiché">
+        <span class="ctrl-label">Usage</span>
+        <div class="usages">
+          <button type="button" data-usage="chauffage" aria-pressed="true"><svg class="ico"><use href="#i-flame"/></svg>Chauffage</button>
+          <button type="button" data-usage="ecs" aria-pressed="false"><svg class="ico"><use href="#i-shower"/></svg>Eau chaude</button>
+          <button type="button" data-usage="eau" aria-pressed="false"><svg class="ico"><use href="#i-drop"/></svg>Eau</button>
+          <button type="button" data-usage="elec" aria-pressed="false"><svg class="ico"><use href="#i-bolt"/></svg>Électricité</button>
+        </div>
+      </div>
+      <div class="ctrl" role="group" aria-label="Couleur des logements">
+        <span class="ctrl-label">Couleur</span>
+        <div class="seg">
+          <button type="button" data-color="intensite" aria-pressed="true">Intensité</button>
+          <button type="button" data-color="ecart" aria-pressed="false">Écart aux comparables</button>
+        </div>
+      </div>
+
+      <div class="kpis" data-bind="kpis" aria-live="polite"></div>
+
+      <div class="cmp" data-bind="cmp"></div>
+
+      <div class="alerts-box">
+        <div class="ab-head"><h2>Alertes</h2><span class="ab-count" data-bind="alert-count"></span></div>
+        <ol class="alerts" data-bind="alerts"></ol>
+        <p class="ab-note">Trouvées par les règles du jumeau à partir des seules données de comptage. <a href="#regles">Voir les règles</a></p>
+      </div>
+    </aside>
+
+    <aside class="panel panel-right" id="detail" aria-label="Détail" aria-live="polite" hidden>
+      <button class="x" type="button" data-close-detail aria-label="Fermer le détail"><svg class="ico"><use href="#i-close"/></svg></button>
+      <div data-bind="detail"></div>
+    </aside>
+
+    <div class="timeline" aria-label="Frise de l'année">
+      <button class="tl-play" type="button" data-act="play" aria-label="Lire l'année"><svg class="ico"><use href="#i-play"/></svg></button>
+      <div class="tl-modes seg" role="group" aria-label="Période des couleurs">
+        <button type="button" data-period="an" aria-pressed="true">Année</button>
+        <button type="button" data-period="mois" aria-pressed="false">Mois</button>
+        <button type="button" data-period="jour" aria-pressed="false">Jour</button>
+      </div>
+      <div class="tl-chart" data-bind="tl-chart" tabindex="0" role="slider" aria-label="Date affichée" aria-valuemin="0" aria-valuemax="365" aria-valuenow="0"></div>
+    </div>
+  </section>
+
+  <div class="story">
+    <section class="block" id="comparaison" aria-labelledby="h-cmp">
+      <header class="block-head">
+        <p class="eyebrow">Ce que la variante change</p>
+        <h2 id="h-cmp">Tour A1, conçue selon le DCE, et tour A2, variante RE2020 de Veck Construction</h2>
+        <p>Les deux tours ont le même plan, la même hauteur et le même réseau de chaleur. Seule la conception thermique change, ce qui fait de la tour A1 un témoin. Le jumeau mesure l'écart, mois par mois.</p>
+      </header>
+      <div class="cmp-grid">
+        <div class="card spec">
+          <h3>Tour A1 · DCE RT 2012</h3>
+          <ul>
+            <li>Voile 20 cm + doublage intérieur PSE graphité 10 cm, <b>U 0,27</b></li>
+            <li>VMC simple flux hygroréglable B</li>
+            <li>Toiture PU 120 mm sous gravillons</li>
+            <li>Eau chaude 100 % réseau de chaleur</li>
+          </ul>
+        </div>
+        <div class="card spec spec-var">
+          <h3>Tour A2 · variante RE2020</h3>
+          <ul>
+            <li>ITE PSE graphité 140 mm, <b>U ≈ 0,21</b></li>
+            <li>3 centrales double flux en toiture</li>
+            <li>Toiture végétalisée sur PU 120 mm</li>
+            <li>30 m² de capteurs solaires, ballon 1 500 L</li>
+            <li>Coffres de volets isolés, béton bas carbone en fondation</li>
+          </ul>
+        </div>
+        <div class="card chart-card wide">
+          <div class="cc-head"><h3>Consommation par m² sur l'année</h3><p>kWh/m² de surface habitable ; eau en litres/m².</p></div>
+          <div data-bind="cmp-bars"></div>
+        </div>
+        <div class="card chart-card wide">
+          <div class="cc-head"><h3>Chaleur achetée au réseau, mois par mois</h3><p>MWh livrés à chaque sous-station, après la production solaire de la tour A2.</p></div>
+          <div data-bind="cmp-months"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="cout-global" aria-labelledby="h-cg">
+      <header class="block-head">
+        <p class="eyebrow">Pour le coût global</p>
+        <h2 id="h-cg">Ce que coûte l'exploitation sur 50 ans</h2>
+        <p>La première année simulée sert de base. Les prix et leur évolution sont modifiables. Saisissez le surcoût de la variante A2 pour obtenir son temps de retour.</p>
+      </header>
+      <div class="cg-grid">
+        <form class="card cg-form" data-bind="cg-form" onsubmit="return false"></form>
+        <div class="card chart-card">
+          <div class="cc-head"><h3>Dépenses cumulées d'énergie</h3><p data-bind="cg-sub">€ TTC, deux tours, prix évolutifs.</p></div>
+          <div data-bind="cg-chart"></div>
+          <div class="cg-out" data-bind="cg-out"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="methode" aria-labelledby="h-met">
+      <header class="block-head">
+        <p class="eyebrow">Méthode</p>
+        <h2 id="h-met">Du compteur à la maquette</h2>
+        <p>Le jumeau n'ajoute aucun capteur : il exploite les comptages déjà prévus au CCTP 502. Chaque logement dispose d'un module thermique Uponor qui compte séparément le chauffage, l'eau chaude et l'eau froide, avec télé-relève.</p>
+      </header>
+      <ol class="flow">
+        <li><span class="fl-n">1</span><strong>Comptage</strong><span>Module thermique de chaque logement (chaleur, eau chaude, eau froide), compteur électrique, compteur de la sous-station, sondes des centrales double flux.</span></li>
+        <li><span class="fl-n">2</span><strong>Télé-relève</strong><span>Relève quotidienne par radio, déjà exigée au lot 502, envoyée à la plateforme de l'exploitant.</span></li>
+        <li><span class="fl-n">3</span><strong>Maquette</strong><span>Chaque série est rattachée à un logement reconstitué dans la maquette IFC (ISO 16739). Les ouvrages portent leurs données thermiques dans les Pset IFC.</span></li>
+        <li><span class="fl-n">4</span><strong>Règles</strong><span>Comparaison avec une référence recalée sur la météo et les logements comparables, puis détection des dérives.</span></li>
+        <li><span class="fl-n">5</span><strong>Action</strong><span>Alerte au gestionnaire, à l'occupant ou à Veck Construction pendant la garantie de parfait achèvement.</span></li>
+      </ol>
+      <div class="met-grid">
+        <div class="card" id="regles">
+          <h3>Règles de détection</h3>
+          <ol class="rules" data-bind="rules"></ol>
+        </div>
+        <div class="card">
+          <h3>Ce qui est réel, ce qui est simulé</h3>
+          <dl class="truth">
+            <div><dt><span class="tag tag-real">DCE et maquette</span></dt><dd>Les 129 logements, leur typologie et leur surface (tableau des surfaces ind. A), leur emplacement (voiles séparatifs de la maquette), les compositions de parois, les isolants, les équipements et la variante A2.</dd></div>
+            <div><dt><span class="tag tag-src">Sources publiques</span></dt><dd data-bind="real-src"></dd></div>
+            <div><dt><span class="tag tag-hyp">Hypothèses</span></dt><dd>Occupation des logements, gains de la variante A2 (−30 % de chauffage), rendement solaire et de récupération, évolution des prix. Elles restent à confirmer par l'étude énergétique.</dd></div>
+            <div><dt><span class="tag tag-fic">Simulé</span></dt><dd>Toutes les consommations, la météo et les alertes. Les anomalies sont injectées dans le scénario ; la détection, elle, applique réellement les règles aux données.</dd></div>
+          </dl>
+        </div>
+        <div class="card">
+          <h3>Normes et cadre</h3>
+          <ul class="norms">
+            <li><b>ISO 19650-3</b> : gestion de l'information en phase d'exploitation. Le jumeau prolonge la maquette de chantier.</li>
+            <li><b>ISO 16739 (IFC)</b> : propriétés thermiques portées par les Pset (ThermalTransmittance, IsExternal) et logements en IfcSpace.</li>
+            <li><b>RE2020 / RT 2012</b> : la référence de conception reste le Cep de l'étude (<span data-bind="cep"></span>). C'est un calcul conventionnel : il ne se compare pas aux compteurs sans recalage.</li>
+            <li><b>RGPD</b> : en exploitation réelle, les consommations d'un logement sont des données personnelles. Le gestionnaire ne voit que des agrégats ou des données pseudonymisées, l'occupant voit les siennes.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="colophon">Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 · Veck Construction · données générées par <code>tools/build_energie.py</code> le <span data-bind="gen-date"></span>.</p>
+    </section>
+  </div>
+</main>
+
+<div class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
