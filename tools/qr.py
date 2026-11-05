@@ -59,7 +59,8 @@ def label_pdf(qr, url, ref, title, place, logo=None):
     c.roundRect(3 * mm, 3 * mm, W - 6 * mm, H - 6 * mm, 3 * mm)
     c.setFillColor(HexColor(PINK)); c.rect(3 * mm, H - 13 * mm, W - 6 * mm, 10 * mm, stroke=0, fill=1)
     c.setFillColor(HexColor('#ffffff')); c.setFont('Archivo-Bold', 10)
-    c.drawString(8 * mm, H - 9.6 * mm, 'Passeport numérique d\'ouvrage — Domaine de Fontbelleau')
+    projet = ref.startswith('Projet')
+    c.drawString(8 * mm, H - 9.6 * mm, 'Maquette numérique du projet — Domaine de Fontbelleau' if projet else 'Passeport numérique d\'ouvrage — Domaine de Fontbelleau')
     # QR (dessiné en vecteurs, sans perte)
     size = 62 * mm
     x0, y0 = W - size - 9 * mm, 14 * mm
@@ -74,18 +75,30 @@ def label_pdf(qr, url, ref, title, place, logo=None):
             if v:
                 c.rect(x0 + (col + border) * cell, y0 + size - (r + border + 1) * cell, cell + 0.05, cell + 0.05, stroke=0, fill=1)
     # référence au pochoir
-    c.setFillColor(HexColor(INK)); c.setFont('Stencil', 46)
+    fs = 46
+    while fs > 24 and c.stringWidth(title, 'Stencil', fs) > x0 - 13 * mm:
+        fs -= 1
+    c.setFillColor(HexColor(INK)); c.setFont('Stencil', fs)
     c.drawString(9 * mm, H - 33 * mm, title)
     c.setStrokeColor(HexColor(PINK)); c.setLineWidth(3.2); c.setLineCap(1)
-    tw = c.stringWidth(title, 'Stencil', 46)
+    tw = c.stringWidth(title, 'Stencil', fs)
     c.line(9 * mm, H - 36.5 * mm, 9 * mm + tw, H - 35.5 * mm)
     c.setFont('Archivo', 10.5); c.setFillColor(HexColor('#56616a'))
-    c.drawString(9 * mm, H - 44 * mm, place)
+    words, lines, cur = place.split(), [], ''
+    for w_ in words:
+        t_ = (cur + ' ' + w_).strip()
+        if c.stringWidth(t_, 'Archivo', 10.5) > x0 - 13 * mm and cur:
+            lines.append(cur); cur = w_
+        else:
+            cur = t_
+    lines.append(cur)
+    for k_, ln in enumerate(lines[:2]):
+        c.drawString(9 * mm, H - 44 * mm - k_ * 4.6 * mm, ln)
     c.setFont('Archivo-Bold', 13); c.setFillColor(HexColor(INK))
     c.drawString(9 * mm, 38 * mm, 'Scannez pour ouvrir')
-    c.drawString(9 * mm, 32 * mm, 'le passeport de l\'ouvrage')
+    c.drawString(9 * mm, 32 * mm, 'la maquette du projet' if projet else 'le passeport de l\'ouvrage')
     c.setFont('Archivo', 8.5); c.setFillColor(HexColor('#56616a'))
-    c.drawString(9 * mm, 24 * mm, 'Identité, plans, planning et suivi.')
+    c.drawString(9 * mm, 24 * mm, 'Touchez un ouvrage pour voir sa fiche.' if projet else 'Identité, plans, planning et suivi.')
     c.drawString(9 * mm, 20 * mm, 'Aucune application à installer.')
     short = url.replace('https://', '')
     c.setFont('Archivo', 6.5)

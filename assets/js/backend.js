@@ -48,7 +48,7 @@ export async function role(user) {
 
 export async function signIn(email) {
   const c = db();
-  const back = location.origin + location.pathname; // retour sur la page du passeport après le clic dans l'e-mail
+  const back = location.origin + location.pathname + location.search; // retour sur la page du passeport après le clic dans l'e-mail
   const { error } = await c.auth.signInWithOtp({ email, options: { emailRedirectTo: back, shouldCreateUser: true } });
   if (error) throw error;
 }
@@ -69,6 +69,25 @@ export async function loadState(ref) {
     q(c.from('documents').select('*').eq('ref', ref).order('cree_le', { ascending: true }))
   ]);
   return { ouvrage, evenements, notes, photos, champs, documents };
+}
+
+// Crée la ligne de suivi d'un ouvrage au premier geste d'un éditeur, avec l'historique fictif du scénario.
+export async function initOuvrage(ref, statut, majLe, evenements) {
+  const { error } = await db().rpc('initialiser_ouvrage', { p_ref: ref, p_statut: statut, p_maj_le: majLe || null, p_evenements: evenements || [] });
+  if (error) throw error;
+}
+
+// Statuts de tous les ouvrages suivis en ligne (page d'accueil).
+export async function listStatuts() {
+  const c = db();
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await withTimeout(c.from('ouvrages').select('ref,statut,maj_le').range(from, from + 999));
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  return out;
 }
 
 export async function changeStatus(ref, statut, commentaire) {

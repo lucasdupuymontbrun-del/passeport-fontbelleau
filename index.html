@@ -2,29 +2,117 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Passeports numériques — Domaine de Fontbelleau</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette du projet — Passeports numériques · Domaine de Fontbelleau</title>
+<meta name="description" content="Maquette 3D du Domaine de Fontbelleau : touchez un ouvrage pour afficher son résumé et ouvrir son passeport numérique.">
+<meta name="theme-color" content="#e6e8e5">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/archivo-wdth.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css/app.css">
-<style>
-  .reg { max-width: 760px; margin: 0 auto; padding: 48px var(--gut); }
-  .reg h1 { font-family: var(--mark); font-size: clamp(48px, 10vw, 88px); line-height: .9; margin: 0 0 16px; }
-  .reg p { color: var(--ardoise); max-width: 56ch; }
-  .reg ul { list-style: none; padding: 0; margin: 28px 0 0; border-top: 1px solid var(--trait); }
-  .reg li a { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 16px 4px; border-bottom: 1px solid var(--trait); text-decoration: none; }
-  .reg li a:hover { background: var(--papier); }
-  .reg strong { font-size: 20px; font-weight: 800; font-stretch: 85%; }
-  .reg span { color: var(--ardoise); }
-</style>
+<script src="config.js"></script>
+<script src="assets/vendor/supabase.umd.js" defer></script>
+<script type="importmap">{ "imports": { "three": "./assets/vendor/three.module.min.js" } }</script>
+<script type="module" src="assets/js/explore.js"></script>
 </head>
-<body>
-<main class="reg">
-  <img src="assets/img/veck-construction-640.png" width="320" height="60" alt="Veck Construction" style="height:44px;width:auto;margin-bottom:28px">
-  <h1>Fontbelleau</h1>
-  <p>Passeports numériques des ouvrages du chantier. Chaque ouvrage porte un QR code qui ouvre directement sa fiche.</p>
-  <ul>
-    <li><a href="A2-PM106/"><strong>A2 PM 106</strong><span>Ouvrir</span><span>Prémur du noyau central, tour A2, étage R+1</span></a></li>
-  </ul>
+<body class="explore">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></symbol>
+  </defs>
+</svg>
+<a class="skip" href="#ex-search">Aller à la recherche</a>
+
+<header class="topbar">
+  <a class="brand" href="./">
+    <img class="brand-logo" src="assets/img/veck-construction-640.png" width="640" height="119" alt="Veck Construction">
+    <span class="brand-sep" aria-hidden="true"></span>
+    <span class="brand-text"><span class="brand-name"><span class="hide-s">Domaine de </span>Fontbelleau</span><span class="brand-sub">Maquette du projet et passeports d'ouvrage</span></span>
+  </a>
+  <span class="demo-flag" title="Les données fictives de démonstration sont hachurées.">Démonstrateur</span>
+  <div class="account">
+    <a class="btn btn-quiet" href="A2-PM106/"><span>A2 PM 106</span></a>
+    <button class="btn btn-quiet" id="btn-qr" type="button"><svg class="ico"><use href="#i-qr"/></svg><span>QR code</span></button>
+  </div>
+</header>
+
+<main class="ex">
+  <div class="ex-bar">
+    <div class="ex-search" role="search">
+      <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="ex-search" type="search" placeholder="Rechercher un ouvrage : A2 PM 106, voile, R+3…" autocomplete="off" aria-label="Rechercher un ouvrage" aria-controls="ex-results" aria-expanded="false">
+      <ul class="ex-results" id="ex-results" role="listbox" hidden></ul>
+    </div>
+    <div class="ex-filters">
+      <div class="ex-zones" role="group" aria-label="Zone affichée">
+        <button type="button" class="chip-btn" data-zone="ALL" aria-pressed="true">Tout</button>
+        <button type="button" class="chip-btn" data-zone="A1" aria-pressed="false">Tour A1</button>
+        <button type="button" class="chip-btn" data-zone="A2" aria-pressed="false">Tour A2</button>
+        <button type="button" class="chip-btn" data-zone="PARK" aria-pressed="false">Parking</button>
+        <button type="button" class="chip-btn" data-zone="FOND" aria-pressed="false">Fondations</button>
+        <button type="button" class="chip-btn" data-zone="EXT" aria-pressed="false">Extérieurs</button>
+      </div>
+      <label class="ex-storey">Étage
+        <select id="ex-storey" disabled>
+          <option value="">Tous</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="ex-stage">
+    <div class="viewer ex-viewer" id="viewer">
+      <div class="viewer-canvas" data-v="canvas"></div>
+      <div class="viewer-status" data-v="status" role="status">Chargement de la maquette</div>
+      <div class="viewer-label" data-v="label" hidden><span></span></div>
+      <div class="viewer-tip" data-v="tip" hidden></div>
+      <div class="compass" aria-hidden="true"><span data-v="needle"><i></i></span><b>N</b></div>
+      <div class="viewer-tools" role="toolbar" aria-label="Vue 3D">
+        <button type="button" data-v-action="reset"><svg class="ico"><use href="#i-target"/></svg><span>Vue d'ensemble</span></button>
+        <button type="button" data-v-action="replay" title="Rejouer l'apparition"><svg class="ico"><use href="#i-replay"/></svg><span>Rejouer</span></button>
+        <button type="button" data-v-action="fullscreen" title="Plein écran"><svg class="ico"><use href="#i-expand"/></svg><span>Plein écran</span></button>
+      </div>
+      <p class="viewer-hint" data-bind="hint">Touchez un ouvrage pour afficher son résumé. Faites glisser pour tourner, pincez pour zoomer.</p>
+    </div>
+
+    <aside class="ex-panel" id="ex-panel" aria-live="polite" hidden>
+      <button class="x" type="button" data-close-panel aria-label="Fermer le résumé"><svg class="ico"><use href="#i-close"/></svg></button>
+      <p class="plate-context" data-p="context"></p>
+      <h2 class="ex-ref" data-p="reference"></h2>
+      <p class="ex-des" data-p="designation"></p>
+      <div class="ex-state">
+        <span class="pill" data-p="pill"></span>
+        <span data-p="fiab"></span>
+      </div>
+      <dl class="ex-facts" data-p="facts"></dl>
+      <div class="ex-actions">
+        <a class="btn btn-ink" data-p="open" href="#"><svg class="ico"><use href="#i-open"/></svg>Ouvrir la fiche complète</a>
+        <button class="btn btn-quiet" type="button" data-p="focus"><svg class="ico"><use href="#i-target"/></svg>Centrer</button>
+      </div>
+    </aside>
+  </div>
+  <p class="ex-note">Géométrie extraite de la maquette Revit MQT-FONTBELLEAU-G4. Les statuts et les dates sans suivi en ligne viennent d'un scénario de démonstration et sont marqués « Fictif ».</p>
 </main>
+
+<div class="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog class="dlg" id="dlg-qr" aria-labelledby="dlg-qr-t">
+  <div class="dlg-body">
+    <header><h2 id="dlg-qr-t">QR code du projet</h2><button class="x" type="button" data-close aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <img class="qr-img" src="qr/Projet-Fontbelleau.svg" alt="QR code menant à la maquette du projet" width="240" height="240">
+    <p class="qr-url" data-bind="qr-url"></p>
+    <div class="dlg-actions wrap">
+      <a class="btn btn-line" href="qr/Projet-Fontbelleau.png" download><svg class="ico"><use href="#i-download"/></svg>PNG</a>
+      <a class="btn btn-line" href="qr/Projet-Fontbelleau.svg" download><svg class="ico"><use href="#i-download"/></svg>SVG</a>
+      <a class="btn btn-ink" href="qr/Etiquette_Projet-Fontbelleau.pdf" download><svg class="ico"><use href="#i-download"/></svg>Étiquette à imprimer</a>
+    </div>
+  </div>
+</dialog>
 </body>
 </html>

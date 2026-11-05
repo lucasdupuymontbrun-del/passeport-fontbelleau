@@ -1,20 +1,35 @@
-# Passeport numérique A2 PM 106 — guide de mise à jour et de maintenance
+# Passeports numériques des ouvrages — guide de mise à jour et de maintenance
 
 Ce guide explique comment faire vivre le passeport sans reconstruire l'interface.
 
-## 1. Comment le passeport est construit
+## 1. Comment les passeports sont construits
+
+Le site contient **un passeport par ouvrage de la maquette** (3 899 fiches) et **deux QR codes** :
+
+- le QR d'**A2 PM 106**, qui ouvre directement sa fiche détaillée (`A2-PM106/`) ;
+- le QR du **projet**, qui ouvre la maquette 3D (page d'accueil du site). On y touche un ouvrage (ou on le cherche par sa référence) pour afficher son résumé, puis on ouvre sa fiche complète (`o/?r=<référence>`).
 
 | Partie | Où elle se trouve | Qui la modifie |
 |---|---|---|
-| Interface (pages, styles, scripts) | `A2-PM106/index.html`, `assets/` | Rarement, par la personne qui maintient le site |
-| Données de référence (identité, documents, planning, scénario) | `data/A2-PM106.json` | Le référent BIM, par un commit sur GitHub |
-| Suivi de chantier (statut, remarques, réserves, photos, dates saisies, historique) | Base Supabase | Les éditeurs, depuis le passeport, sur téléphone ou ordinateur |
-| Plans du DCE | Stockage privé Supabase, dossier `documents` | Les éditeurs, depuis le passeport (bouton « Ajouter un document ») |
-| Vue 3D | `model/a2.json` et `model/a2.bin(.gz)`, extraits de la maquette Revit | Le référent BIM, après une évolution de la maquette |
-| Plan de repérage | `plans/A2-PM106-R1.svg`, généré depuis la vue 3D | Le référent BIM |
-| QR code et étiquette | `qr/` | Généré une fois ; à refaire seulement si l'adresse du site change |
+| Interface | `index.html` (maquette du projet), `o/index.html` (fiche d'un ouvrage), `A2-PM106/index.html`, `assets/` | Rarement, par la personne qui maintient le site |
+| Fiches des ouvrages | `data/o/<référence>.json`, `data/commun.json`, `data/index.json` | Générées par `tools/build_passeports.py` depuis la maquette |
+| Fiche détaillée d'A2 PM 106 | `tools/sources/A2-PM106.json` (rédigée et vérifiée à la main) | Le référent BIM |
+| Suivi de chantier (statut, remarques, réserves, photos, dates saisies, historique) | Base Supabase | Les éditeurs, depuis les fiches |
+| Plans du DCE | Stockage privé Supabase, compartiment `documents` | Les éditeurs, ou le tableau de bord Supabase |
+| Vue 3D | `model/site.json`, `model/site.bin(.gz)` | Générée depuis la maquette Revit |
+| Plans de repérage | `plans/<zone>-<étage>.svg` | Générés depuis la vue 3D |
+| QR codes et étiquettes | `qr/A2-PM106.*`, `qr/Projet-Fontbelleau.*` | Générés une fois ; à refaire seulement si l'adresse du site change |
+| Audit de la maquette | `docs/AUDIT_OUVRAGES.md` | Régénéré avec les fiches |
 
-Le site est statique (GitHub Pages). Les données vivantes sont dans Supabase. Si Supabase ne répond pas, le passeport reste lisible : il affiche le scénario enregistré dans `data/A2-PM106.json` et l'indique dans la rubrique « Suivi de chantier ».
+Le site est statique (GitHub Pages). Les données vivantes sont dans Supabase. Tant qu'un éditeur n'a rien modifié sur un ouvrage, sa fiche affiche le scénario de démonstration (marqué « Fictif ») ; la ligne de suivi en ligne est créée automatiquement au premier geste d'un éditeur (fonction `initialiser_ouvrage`, voir `supabase/migration_tous_ouvrages.sql`).
+
+### Ce qui vient de la maquette et ce qui est fictif
+
+- **Maquette** (tag « Maquette ») : référence, désignation, catégorie, bâtiment, étage, dimensions, surfaces et volumes, matériaux, lot quand il est écrit dans la maquette, position NGF, ouvrages au contact, quantités.
+- **Vérifié** : bâtiment (sous-projet + DCE), lot 301 pour le gros œuvre (CCTP 301), pièces du DCE correspondant à la zone et à l'étage d'après leur intitulé.
+- **Estimation** : poids des éléments en béton (volume × 2,5 t/m³).
+- **Fictif** (hachuré) : fournisseurs, références de commande, montants, délais, dates des jalons, statuts, équipes, matériel, contrôles. Le scénario suit un cycle de 2 semaines par étage, la tour A1 ayant 4 semaines d'avance sur la tour A2, et reste cohérent avec A2 PM 106 (livré le 04/11/2026, pose prévue le 18/11/2026).
+- **Non disponible** : tout le reste (ferraillage, notes de calcul, fiches techniques, CCTP absents du DCE…).
 
 ## 2. Mettre à jour le suivi depuis le chantier (éditeurs)
 
@@ -61,7 +76,7 @@ Certains projets Supabase refusent de créer les règles de stockage depuis le S
 
 Relancez ensuite `supabase/schema.sql` : la ligne doit passer à « OK ».
 
-## 4. Modifier les données de référence (`data/A2-PM106.json`)
+## 4. Modifier la fiche détaillée d'A2 PM 106 (`tools/sources/A2-PM106.json`, puis relancer `tools/build_passeports.py`)
 
 Sur GitHub, ouvrez le fichier, cliquez sur le crayon, modifiez, puis « Commit changes ». Le site est republié en une à deux minutes.
 
@@ -99,18 +114,22 @@ Deux possibilités :
 
 Les plans du DCE ne doivent pas être déposés dans le dépôt GitHub : il est public.
 
-## 6. Mettre à jour la vue 3D après une modification de la maquette
+## 6. Régénérer les fiches, la 3D et les plans après une modification de la maquette
 
-1. Ouvrir `MQT-FONTBELLEAU-G4` dans Revit et exécuter `tools/revit_export_geometry.py` (pont Python, pyRevit ou RevitPythonShell). Le script est en lecture seule et écrit dans `Documents\Passeport_A2_PM106\export3d\`.
-2. Copier le dossier `export3d` à la racine du site, puis :
+1. Ouvrir `MQT-FONTBELLEAU-G4` dans Revit et exécuter, avec le pont Python, pyRevit ou RevitPythonShell :
+   - `tools/revit_export_ouvrages.py` (données de tous les ouvrages) ;
+   - `tools/revit_export_geometry_all.py` (géométrie 3D).
+   Les deux scripts sont en lecture seule et écrivent dans `Documents\Passeport_Fontbelleau\`.
+2. Copier `export\ouvrages.json` et le dossier `export3d` sur le poste qui génère le site, puis :
 
 ```bash
-python tools/build_model.py
-gzip -9 -k -f model/a2.bin
-python tools/build_plan.py
+pip install numpy
+python tools/build_passeports.py <chemin>/ouvrages.json <chemin>/export3d
 ```
 
-3. Publier (commit) `model/` et `plans/`. Ne pas publier `export3d/`.
+3. Lire `docs/AUDIT_OUVRAGES.md` (identifiants en double, éléments sans identifiant, incohérences), puis publier `data/`, `model/`, `plans/` et `docs/`.
+
+La référence d'une fiche dérive de l'identifiant de la maquette (`A2 PM 001` → `A2-PM001`). Les éléments de la tour A1 reçoivent le préfixe `A1`, déduit de leur sous-projet. Un identifiant partagé par plusieurs éléments donne des fiches numérotées (`A2-P201-1`, `A2-P201-2`…) et un avertissement.
 
 ## 6 bis. Lien avec la maquette Revit
 
@@ -123,28 +142,30 @@ Deux paramètres partagés d'occurrence sont liés à la catégorie **Murs** (gr
 
 Leur définition est dans un fichier séparé, `Documents\FONTBELLEAU_terrain\scripts\PASSEPORT_params_partages.txt` ; le fichier de paramètres partagés habituel du projet n'a pas été modifié. Le voile jumeau de la tour A1 (élément 318104) a été renommé « A1 PM 106 » pour lever l'homonymie.
 
-Le passeport en ligne reste la source de vérité du statut : « Passeport - Statut » est une copie, à mettre à jour à la main dans Revit lors des jalons importants (livraison, pose, réception). Après toute modification, **Synchroniser avec le fichier central**.
+Ces deux paramètres ne sont remplis que pour A2 PM 106 ; les autres ouvrages sont accessibles par la maquette du projet. Le passeport en ligne reste la source de vérité du statut : « Passeport - Statut » est une copie, à mettre à jour à la main dans Revit lors des jalons importants (livraison, pose, réception). Après toute modification, **Synchroniser avec le fichier central**.
 
-## 7. QR code
+## 7. QR codes
 
-Adresse actuelle : `https://lucasdupuymontbrun-del.github.io/passeport-fontbelleau/A2-PM106/`.
+Deux QR codes seulement :
 
-Le QR code contient l'adresse **permanente** `https://<compte>.github.io/<dépôt>/A2-PM106/`. Il ne change pas quand les données changent. Il faut le régénérer seulement si l'adresse du site change :
+| QR | Adresse | Fichiers |
+|---|---|---|
+| A2 PM 106 | `https://lucasdupuymontbrun-del.github.io/passeport-fontbelleau/A2-PM106/` | `qr/A2-PM106.png`, `.svg`, `qr/Etiquette_A2-PM106.pdf` |
+| Projet (maquette 3D) | `https://lucasdupuymontbrun-del.github.io/passeport-fontbelleau/` | `qr/Projet-Fontbelleau.png`, `.svg`, `qr/Etiquette_Projet-Fontbelleau.pdf` |
+
+À regénérer seulement si l'adresse du site change :
 
 ```bash
 pip install segno reportlab opencv-python-headless
-python tools/qr.py https://<compte>.github.io/<dépôt>/A2-PM106/ A2-PM106 "A2 PM 106" "Tour A2, étage R+1, noyau central"
+python tools/qr.py <adresse>/A2-PM106/ A2-PM106 "A2 PM 106" "Tour A2, étage R+1, noyau central"
+python tools/qr.py <adresse>/ Projet-Fontbelleau "Fontbelleau" "Tours A1 et A2, parking, fondations et abords"
 ```
 
-Le script relit le QR produit et refuse de terminer si l'adresse lue ne correspond pas. L'étiquette `qr/Etiquette_A2-PM106.pdf` mesure 150 × 100 mm ; imprimez-la à 100 %, plastifiez-la et fixez-la à hauteur d'yeux près de l'ouvrage.
+Le script relit chaque QR produit et refuse de terminer si l'adresse lue ne correspond pas. Les étiquettes mesurent 150 × 100 mm ; imprimez-les à 100 %. Le lien `…/?o=<référence>` ouvre la maquette directement sur un ouvrage.
 
-## 8. Créer le passeport d'un autre ouvrage
+## 8. Plans du DCE consultables depuis les fiches
 
-1. Copier `A2-PM106/` en `A2-PM107/` et remplacer `data-ref="A2-PM106"` dans `index.html`.
-2. Copier `data/A2-PM106.json` en `data/A2-PM107.json` et le remplir.
-3. Dans Supabase : `insert into ouvrages (ref, statut) values ('A2-PM107', 'a_commander');`
-4. Pour la 3D, adapter `TARGET` (ElementId) dans `tools/revit_export_geometry.py`.
-5. Générer le QR code avec la nouvelle adresse.
+Les fiches renvoient vers les pièces du DCE correspondant à leur zone et à leur étage. Elles s'ouvrent après connexion (membres) depuis le compartiment privé `documents` de Supabase. Quatre pièces y sont déjà, dans `A2-PM106/` (GO.03.02.05, GO.03.02.07, coupe A2, CCTP 301). Les autres sont attendues dans `documents/dce/` sous les noms indiqués dans `data/commun.json` (champ `fichier`) ; tant qu'un fichier manque, la fiche l'indique au clic.
 
 ## 9. Disponibilité et sécurité
 

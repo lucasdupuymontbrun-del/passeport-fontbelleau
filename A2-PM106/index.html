@@ -50,6 +50,7 @@
   </a>
   <span class="demo-flag" title="Les données fictives de démonstration sont hachurées dans tout le passeport.">Démonstrateur</span>
   <div class="account">
+    <a class="btn btn-quiet" href="../" data-bind="back-maquette" title="Ouvrir la maquette du projet pour choisir un autre ouvrage"><svg class="ico"><use href="#i-layers"/></svg><span>Maquette du projet</span></a>
     <button class="btn btn-quiet" id="btn-qr" type="button"><svg class="ico"><use href="#i-qr"/></svg><span>QR code</span></button>
     <button class="btn btn-quiet" id="btn-login" type="button"><svg class="ico"><use href="#i-user"/></svg><span data-bind="login-label">Se connecter</span></button>
   </div>
@@ -85,19 +86,19 @@
     <div class="viewer" id="viewer" data-mode="coupe">
       <div class="viewer-canvas" data-v="canvas"></div>
       <div class="viewer-status" data-v="status" role="status">Préparation de la vue 3D</div>
-      <div class="viewer-label" data-v="label" hidden><span>A2 PM 106</span></div>
+      <div class="viewer-label" data-v="label" hidden><span data-bind="v-label">A2 PM 106</span></div>
       <div class="viewer-tip" data-v="tip" hidden></div>
       <div class="compass" aria-hidden="true"><span data-v="needle"><i></i></span><b>N</b></div>
       <div class="viewer-tools" role="toolbar" aria-label="Vues 3D">
         <button type="button" data-mode="situation" aria-pressed="false"><svg class="ico"><use href="#i-site"/></svg><span>Situation</span></button>
-        <button type="button" data-mode="tour" aria-pressed="false"><svg class="ico"><use href="#i-tower"/></svg><span>Tour A2</span></button>
+        <button type="button" data-mode="tour" aria-pressed="false"><svg class="ico"><use href="#i-tower"/></svg><span data-bind="v-zone">Tour A2</span></button>
         <button type="button" data-mode="isoler" aria-pressed="false"><svg class="ico"><use href="#i-target"/></svg><span>Isoler</span></button>
-        <button type="button" data-mode="coupe" aria-pressed="true"><svg class="ico"><use href="#i-cut"/></svg><span>Coupe R+1</span></button>
+        <button type="button" data-mode="coupe" aria-pressed="true"><svg class="ico"><use href="#i-cut"/></svg><span data-bind="v-coupe">Coupe R+1</span></button>
         <span class="sep" aria-hidden="true"></span>
         <button type="button" data-v-action="replay" title="Rejouer l'apparition"><svg class="ico"><use href="#i-replay"/></svg><span>Rejouer</span></button>
         <button type="button" data-v-action="fullscreen" title="Plein écran"><svg class="ico"><use href="#i-expand"/></svg><span>Plein écran</span></button>
       </div>
-      <p class="viewer-hint">Géométrie extraite de la maquette Revit. Touchez un élément pour l'identifier.</p>
+      <p class="viewer-hint">Géométrie extraite de la maquette Revit. Touchez un élément pour l'identifier et ouvrir son passeport.</p>
     </div>
   </section>
 
@@ -133,17 +134,17 @@
     <div class="sec-body loc-body">
       <figure class="plan">
         <div class="plan-tools" role="group" aria-label="Cadrage du plan">
-          <button type="button" class="chip-btn" data-plan="noyau" aria-pressed="true">Noyau</button>
-          <button type="button" class="chip-btn" data-plan="tour" aria-pressed="false">Tour entière</button>
+          <button type="button" class="chip-btn" data-plan="noyau" aria-pressed="true">Autour de l'ouvrage</button>
+          <button type="button" class="chip-btn" data-plan="tour" aria-pressed="false" data-bind="plan-all">Tour entière</button>
         </div>
         <div class="plan-svg" data-bind="plan"></div>
-        <figcaption>Coupe horizontale à 1,42 m au-dessus du plancher R+1, générée depuis la maquette. Nord du projet vers le haut.</figcaption>
+        <figcaption data-bind="plan-caption">Coupe horizontale générée depuis la maquette. Nord du projet vers le haut.</figcaption>
       </figure>
       <div>
         <h3 class="sub">Ouvrages au contact</h3>
         <ul class="neighbours" data-bind="voisins"></ul>
         <p class="src-line" data-bind="loc-src"></p>
-        <button class="btn btn-line" type="button" data-action="isoler3d"><svg class="ico"><use href="#i-target"/></svg>Voir le noyau en 3D</button>
+        <button class="btn btn-line" type="button" data-action="isoler3d"><svg class="ico"><use href="#i-target"/></svg>Voir les ouvrages voisins en 3D</button>
       </div>
     </div>
   </section>
@@ -311,13 +312,14 @@
 <dialog class="dlg" id="dlg-qr" aria-labelledby="dlg-qr-t">
   <div class="dlg-body">
     <header><h2 id="dlg-qr-t">QR code de l'ouvrage</h2><button class="x" type="button" data-close aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
-    <img class="qr-img" src="../qr/A2-PM106.svg" alt="QR code menant au passeport A2 PM 106" width="240" height="240">
+    <img class="qr-img" data-bind="qr-img" src="../qr/A2-PM106.svg" alt="QR code menant au passeport A2 PM 106" width="240" height="240">
     <p class="qr-url" data-bind="qr-url"></p>
     <div class="dlg-actions wrap">
-      <a class="btn btn-line" href="../qr/A2-PM106.png" download><svg class="ico"><use href="#i-download"/></svg>PNG</a>
-      <a class="btn btn-line" href="../qr/A2-PM106.svg" download><svg class="ico"><use href="#i-download"/></svg>SVG</a>
-      <a class="btn btn-ink" href="../qr/Etiquette_A2-PM106.pdf" download><svg class="ico"><use href="#i-download"/></svg>Étiquette à imprimer</a>
+      <a class="btn btn-line" data-bind="qr-png" href="../qr/A2-PM106.png" download><svg class="ico"><use href="#i-download"/></svg>PNG</a>
+      <a class="btn btn-line" data-bind="qr-svg" href="../qr/A2-PM106.svg" download><svg class="ico"><use href="#i-download"/></svg>SVG</a>
+      <a class="btn btn-ink" data-bind="qr-label" href="../qr/Etiquette_A2-PM106.pdf" download><svg class="ico"><use href="#i-download"/></svg>Étiquette à imprimer</a>
     </div>
+    <p class="qr-note" data-bind="qr-note" hidden></p>
   </div>
 </dialog>
 </body>

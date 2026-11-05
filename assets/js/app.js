@@ -1,7 +1,7 @@
-// Passeport numérique d'ouvrage : rendu de la page à partir de data/<REF>.json et des données de suivi.
+// Passeport numérique d'ouvrage : rendu de la page à partir de data/o/<REF>.json, data/commun.json et des données de suivi.
 import * as api from './backend.js';
 
-const REF = document.body.dataset.ref;
+const REF = (document.body.dataset.ref || new URLSearchParams(location.search).get('r') || '').trim();
 const CFG = window.PASSEPORT_CONFIG || {};
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -91,6 +91,7 @@ function override(key) { return champs().get(key) || null; }
 // ---------- statut ----------
 function statuses() { return S.data.statuts; }
 function currentStatusKey() { return S.live?.ouvrage?.statut || S.data.scenario.statut; }
+function liveRow() { return S.mode === 'live' && Boolean(S.live?.ouvrage); }
 function statusIndex(k) { return statuses().findIndex(s => s.cle === k); }
 function statusDef(k) { return statuses().find(s => s.cle === k) || { cle: k, label: k, phase: 'achat' }; }
 function lastUpdate() {
@@ -118,6 +119,7 @@ function renderHero() {
   const d = S.data;
   bind('reference').forEach(n => { n.textContent = d.reference; });
   bind('designation')[0].textContent = d.designation;
+  bind('context').forEach(n => { n.textContent = d.contexte || ''; });
 
   const key = currentStatusKey();
   const idx = statusIndex(key);
@@ -125,7 +127,7 @@ function renderHero() {
   const pill = bind('status-pill')[0];
   pill.textContent = def.label;
   pill.dataset.status = key;
-  pill.classList.toggle('is-fictif', S.mode !== 'live');
+  pill.classList.toggle('is-fictif', !liveRow());
 
   const ol = bind('steps')[0]; ol.textContent = '';
   statuses().forEach((s, i) => {
@@ -193,6 +195,8 @@ function renderIdentite() {
   for (const r of d.identite) dl.append(row('identite', r, { editable: !['reference', 'identifiants'].includes(r.cle) }));
 }
 
+const PLAN_ALL = { A1: 'Tour entière', A2: 'Tour entière', LT: 'Tour entière', PARK: 'Parking entier', FOND: 'Toutes les fondations', EXT: 'Tout le site' };
+function passportHref(slug) { return slug === 'A2-PM106' ? '../A2-PM106/' : `../o/?r=${encodeURIComponent(slug)}`; }
 async function renderLocalisation() {
   const L = S.data.localisation;
   bind('loc-resume')[0].textContent = L.resume;
@@ -202,26 +206,79 @@ async function renderLocalisation() {
     el('div', {}, el('dt', { text: 'Tête' }), el('dd', {}, `${L.ngf_tete.toFixed(2).replace('.', ',')} NGF`))
   );
   const ul = bind('voisins')[0]; ul.textContent = '';
-  for (const v of L.voisins) ul.append(el('li', {}, el('span', { class: 'nb-role', text: v.role }), el('strong', { text: v.ref }), el('span', { class: 'nb-txt', text: v.texte })));
+  if (!L.voisins.length) ul.append(el('li', { class: 'empty', text: 'Aucun ouvrage repéré à proximité dans la maquette.' }));
+  for (const v of L.voisins) {
+    const name = v.slug ? el('a', { href: passportHref(v.slug), text: v.ref }) : el('strong', { text: v.ref });
+    ul.append(el('li', {}, el('span', { class: 'nb-role', text: v.role }), name, el('span', { class: 'nb-txt', text: v.texte })));
+  }
   const src = bind('loc-src')[0]; src.textContent = '';
   src.append(fiabTag(L.fiab), ...L.sources.map(s => el('span', { class: 'src-item', text: s })));
+  bind('plan-all').forEach(b => { b.textContent = PLAN_ALL[S.data.zone] || 'Plan entier'; });
 
   const host = bind('plan')[0];
   try {
     const txt = await (await fetch(L.plan)).text();
     host.innerHTML = txt;
     const svg = host.querySelector('svg');
-    const ring = svg.querySelector('.pl-ring');
-    const cx = +ring.getAttribute('cx'), cy = +ring.getAttribute('cy');
     const full = svg.getAttribute('viewBox');
-    const crop = `${cx - 170} ${cy - 150} 340 300`;
+    const scale = Number(svg.dataset.scale) || 30;
+    const NS = 'http://www.w3.org/2000/svg';
+    const tg = svg.querySelector(`[data-id="${L.cible}"]`);
+    let crop = full;
+    if (tg) {
+      tg.classList.add('is-target');
+      const b = tg.getBBox();
+      const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+      const w = Math.max(11 * scale, b.width + 4 * scale), h = Math.max(10 * scale, b.height + 4 * scale);
+      crop = `${(cx - w / 2).toFixed(1)} ${(cy - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`;
+      const ring = document.createElementNS(NS, 'ellipse');
+      ring.setAttribute('class', 'pl-ring');
+      ring.setAttribute('cx', cx); ring.setAttribute('cy', cy);
+      ring.setAttribute('rx', Math.max(b.width / 2 + 0.6 * scale, scale)); ring.setAttribute('ry', Math.max(b.height / 2 + 0.6 * scale, scale));
+      svg.append(ring);
+      const lab = document.createElementNS(NS, 'text');
+      lab.setAttribute('class', 'pl-tlab'); lab.setAttribute('x', cx); lab.setAttribute('y', cy - Math.max(b.height / 2 + 0.6 * scale, scale) - 6);
+      lab.setAttribute('text-anchor', 'middle'); lab.textContent = S.data.reference;
+      svg.append(lab);
+      // étiquettes des ouvrages proches
+      const lim = Math.max(w, h) * 0.55;
+      const placed = [[cx, cy - Math.max(b.height / 2 + 0.6 * scale, scale) - 6]];
+      for (const g of svg.querySelectorAll('.pl-els > g')) {
+        if (g === tg) continue;
+        const bb = g.getBBox();
+        const gx = bb.x + bb.width / 2, gy = bb.y + bb.height / 2;
+        if (Math.abs(gx - cx) > lim || Math.abs(gy - cy) > lim || bb.width * bb.height < 4) continue;
+        if (!/^k-(w|st|f)$/.test(g.getAttribute('class'))) continue;
+        const name = (g.dataset.i || '').replace(/^A[12] /, '');
+        if (!name || name.startsWith('Sans identifiant')) continue;
+        if (placed.some(([px, py]) => Math.abs(px - gx) < 34 && Math.abs(py - gy) < 11)) continue;
+        placed.push([gx, gy]);
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('class', 'pl-lab'); t.setAttribute('x', gx); t.setAttribute('y', gy + 3);
+        t.textContent = name;
+        svg.append(t);
+      }
+    } else {
+      host.append(el('p', { class: 'plan-miss', text: "Cet ouvrage n'apparaît pas dans la coupe du plan (pas de géométrie exportable)." }));
+    }
     svg.setAttribute('viewBox', crop);
+    svg.addEventListener('click', (e) => {
+      const g = e.target.closest('.pl-els > g');
+      if (!g || g === tg || !g.dataset.r) return;
+      location.href = passportHref(g.dataset.r);
+    });
+    for (const g of svg.querySelectorAll('.pl-els > g')) {
+      const t = document.createElementNS(NS, 'title');
+      t.textContent = g === tg ? `${S.data.reference} (cet ouvrage)` : `${g.dataset.i} — ouvrir son passeport`;
+      g.prepend(t);
+    }
     $$('[data-plan]').forEach(b => b.addEventListener('click', () => {
       $$('[data-plan]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
       svg.setAttribute('viewBox', b.dataset.plan === 'tour' ? full : crop);
       svg.classList.toggle('is-full', b.dataset.plan === 'tour');
     }));
   } catch (e) {
+    console.warn(e);
     host.textContent = 'Plan indisponible.';
   }
 }
@@ -285,12 +342,17 @@ function docItem(d, compact = false) {
   li.append(act);
   return li;
 }
+function docErr(e, d) {
+  const m = e?.message || String(e);
+  if (/not.?found|introuvable|does not exist/i.test(m)) return `Ce document n'est pas encore déposé sur l'espace sécurisé (documents/${d.fichier}).`;
+  return errMsg(e);
+}
 async function openPrivate(d) {
   try { const url = await api.signedUrl(d.fichier); const dl = await api.signedUrl(d.fichier, true); openPdf(d.titre, url, dl); }
-  catch (e) { toast(errMsg(e), 'err'); }
+  catch (e) { toast(docErr(e, d), 'err'); }
 }
 async function downloadPrivate(d) {
-  try { location.href = await api.signedUrl(d.fichier, true); } catch (e) { toast(errMsg(e), 'err'); }
+  try { location.href = await api.signedUrl(d.fichier, true); } catch (e) { toast(docErr(e, d), 'err'); }
 }
 function openPdf(title, url, dlUrl) {
   if (window.matchMedia('(max-width: 760px)').matches) { window.open(url, '_blank', 'noopener'); return; }
@@ -402,7 +464,7 @@ function renderPlanning() {
     const ov = override(`controle.${i}`);
     const on = ov?.valeur === 'ok';
     const cb = el('input', { type: 'checkbox', checked: on, disabled: S.role !== 'editeur', onchange: async (e) => {
-      try { await api.setField(REF, `controle.${i}`, e.target.checked ? 'ok' : 'a_faire', 'Contrôle avant pose'); toast(e.target.checked ? 'Contrôle validé.' : 'Contrôle remis à faire.'); await refresh(); }
+      try { await ensureRow(); await api.setField(REF, `controle.${i}`, e.target.checked ? 'ok' : 'a_faire', 'Contrôle avant pose'); toast(e.target.checked ? 'Contrôle validé.' : 'Contrôle remis à faire.'); await refresh(); }
       catch (err) { e.target.checked = !e.target.checked; toast(errMsg(err), 'err'); }
     } });
     ul.append(el('li', {}, el('label', {}, cb, el('span', { text: c }), ov ? el('small', { text: `${on ? 'Validé' : 'À faire'} par ${ov.auteur || 'un éditeur'} le ${fmtDate(ov.maj_le)}` }) : null)));
@@ -454,15 +516,18 @@ function evLabel(e) {
   }
 }
 function renderSuivi() {
-  const live = S.mode === 'live';
+  const online = S.mode === 'live';
+  const live = liveRow();
   bind('suivi-intro')[0].textContent = live
     ? "Suivi en direct : les mises à jour des éditeurs s'affichent sans recharger la page."
+    : online
+      ? "Le suivi en ligne de cet ouvrage n'a pas encore commencé : le scénario de démonstration est affiché. Il démarre à la première mise à jour d'un éditeur."
     : S.mode === 'error'
       ? "Le service de suivi ne répond pas. Affichage du scénario de démonstration enregistré dans le passeport."
       : "Suivi en direct non configuré. Affichage du scénario de démonstration enregistré dans le passeport.";
   const lv = bind('live')[0];
-  lv.textContent = live ? 'En direct' : 'Hors ligne';
-  lv.dataset.on = live ? '1' : '0';
+  lv.textContent = online ? 'En direct' : 'Hors ligne';
+  lv.dataset.on = online ? '1' : '0';
 
   const cur = statusIndex(currentStatusKey());
   const track = bind('track')[0]; track.textContent = '';
@@ -475,7 +540,7 @@ function renderSuivi() {
       ev ? el('span', { class: 'tk-date' + (ev.fictif ? ' is-fictif' : ''), text: fmtDate(ev.cree_le) }) : null));
   });
 
-  const editor = S.role === 'editeur' && live;
+  const editor = S.role === 'editeur' && online;
   $$('[data-action="change-status"]').forEach(b => { b.hidden = !editor; });
   $$('[data-action="add-note"]').forEach(b => { b.hidden = !editor; });
   $$('[data-action="add-photo"]').forEach(b => { b.hidden = !editor; });
@@ -491,7 +556,7 @@ function renderSuivi() {
       el('span', { class: 'note-type' }, TYPES[n.type] || n.type, n.type === 'reserve' ? (n.levee ? ' levée' : ' en cours') : ''),
       el('p', { text: n.texte }),
       el('span', { class: 'note-meta' }, `${n.auteur || 'Inconnu'}, ${fmtDateTime(n.cree_le)}`, n.fictif ? fiabTag('fictif') : null));
-    if (editor && n.type === 'reserve' && n.id) {
+    if (editor && live && n.type === 'reserve' && n.id) {
       li.append(el('button', { class: 'btn btn-quiet btn-s', type: 'button', onclick: async () => {
         try { await api.setNoteLevee(n.id, !n.levee); toast(n.levee ? 'Réserve rouverte.' : 'Réserve levée.'); await refresh(); } catch (e) { toast(errMsg(e), 'err'); }
       } }, n.levee ? 'Rouvrir la réserve' : 'Lever la réserve'));
@@ -527,6 +592,15 @@ function renderSuivi() {
 
   const lu = lastUpdate();
   bind('foot-maj')[0].textContent = `Dernière mise à jour du suivi : ${fmtDateTime(lu.at)}${lu.by ? ` (${lu.by})` : ''}. Données de référence du ${fmtDate(S.data.donnees_maj)}.`;
+}
+
+// ---------- démarrage du suivi en ligne d'un ouvrage ----------
+async function ensureRow() {
+  if (liveRow()) return;
+  const sc = S.data.scenario;
+  const evs = (sc.evenements || []).filter(e => e.type === 'statut').map(e => ({ ancien: e.ancien, nouveau: e.nouveau, commentaire: e.commentaire, cree_le: e.cree_le }));
+  await api.initOuvrage(REF, sc.statut, sc.maj_le, evs);
+  S.live = await api.loadState(REF);
 }
 
 // ---------- dialogues ----------
@@ -590,6 +664,7 @@ function wireDialogs() {
     const f = e.target; const st = f.statut.value; const com = f.commentaire.value.trim();
     if (st === currentStatusKey()) { f.closest('dialog').close(); return; }
     try {
+      await ensureRow();
       await api.changeStatus(REF, st, com);
       // la date réelle du jalon lié au nouveau statut est renseignée si elle manque
       for (const j of jalons().filter(x => x.statut === st && !x.reelle)) {
@@ -605,7 +680,7 @@ function wireDialogs() {
     if (e.submitter?.value !== 'save') return;
     e.preventDefault();
     const f = e.target;
-    try { await api.addNote(REF, f.type.value, f.texte.value.trim()); f.reset(); f.closest('dialog').close(); toast('Note ajoutée.'); await refresh(); }
+    try { await ensureRow(); await api.addNote(REF, f.type.value, f.texte.value.trim()); f.reset(); f.closest('dialog').close(); toast('Note ajoutée.'); await refresh(); }
     catch (err) { toast(errMsg(err), 'err'); }
   });
 
@@ -613,7 +688,7 @@ function wireDialogs() {
     if (e.submitter?.value !== 'save') return;
     e.preventDefault();
     const f = e.target;
-    try { await api.setField(REF, S.fieldTarget, f.valeur.value.trim(), f.source.value.trim()); f.closest('dialog').close(); toast('Information mise à jour.'); await refresh(); }
+    try { await ensureRow(); await api.setField(REF, S.fieldTarget, f.valeur.value.trim(), f.source.value.trim()); f.closest('dialog').close(); toast('Information mise à jour.'); await refresh(); }
     catch (err) { toast(errMsg(err), 'err'); }
   });
 
@@ -624,6 +699,7 @@ function wireDialogs() {
     if (!file) return;
     try {
       toast('Téléversement en cours…');
+      await ensureRow();
       await api.uploadDocument(REF, file, { categorie: f.categorie.value, titre: f.titre.value.trim(), ref_doc: f.ref_doc.value.trim() || null });
       f.reset(); f.closest('dialog').close(); toast('Document ajouté.'); await refresh();
     } catch (err) { toast(errMsg(err), 'err'); }
@@ -644,7 +720,7 @@ function wireDialogs() {
     if (e.submitter?.value !== 'save' || !pendingPhoto) return;
     e.preventDefault();
     const f = e.target;
-    try { toast('Envoi de la photo…'); await api.uploadPhoto(REF, pendingPhoto, f.legende.value.trim()); f.reset(); f.closest('dialog').close(); pendingPhoto = null; toast('Photo ajoutée.'); await refresh(); }
+    try { toast('Envoi de la photo…'); await ensureRow(); await api.uploadPhoto(REF, pendingPhoto, f.legende.value.trim()); f.reset(); f.closest('dialog').close(); pendingPhoto = null; toast('Photo ajoutée.'); await refresh(); }
     catch (err) { toast(errMsg(err), 'err'); }
   });
 
@@ -661,7 +737,7 @@ function wireDialogs() {
   });
 
   function openQr() {
-    bind('qr-url')[0].textContent = canonicalUrl();
+    bind('qr-url')[0].textContent = REF === 'A2-PM106' ? canonicalUrl() : (CFG.siteUrl || location.origin + '/');
     $('#dlg-qr').showModal();
   }
 
@@ -675,7 +751,21 @@ function wireDialogs() {
   }));
 }
 function canonicalUrl() {
-  return CFG.siteUrl ? new URL(`${REF}/`, CFG.siteUrl.endsWith('/') ? CFG.siteUrl : CFG.siteUrl + '/').href : location.href.split('#')[0];
+  if (S.data?.url) return S.data.url;
+  const base = CFG.siteUrl ? (CFG.siteUrl.endsWith('/') ? CFG.siteUrl : CFG.siteUrl + '/') : location.origin + '/';
+  return REF === 'A2-PM106' ? base + 'A2-PM106/' : `${base}o/?r=${encodeURIComponent(REF)}`;
+}
+function setupQr() {
+  // Deux QR codes seulement : celui d'A2 PM 106 et celui du projet (maquette 3D), utilisé pour les autres ouvrages.
+  const single = REF === 'A2-PM106';
+  const f = single ? 'A2-PM106' : 'Projet-Fontbelleau';
+  $('#dlg-qr-t').textContent = single ? "QR code de l'ouvrage" : 'QR code du projet';
+  bind('qr-img').forEach(i => { i.src = `../qr/${f}.svg`; i.alt = single ? `QR code menant au passeport ${S.data.reference}` : 'QR code menant à la maquette du projet'; });
+  bind('qr-png').forEach(a => { a.href = `../qr/${f}.png`; });
+  bind('qr-svg').forEach(a => { a.href = `../qr/${f}.svg`; });
+  bind('qr-label').forEach(a => { a.href = `../qr/Etiquette_${f}.pdf`; });
+  bind('qr-note').forEach(p => { p.hidden = single; p.textContent = single ? '' : `${S.data.reference} n'a pas de QR code individuel. Le QR du projet ouvre la maquette 3D : touchez l'ouvrage pour retrouver ce passeport.`; });
+  $$('[data-action="qr"]').forEach(b => { b.hidden = !single; });
 }
 
 // ---------- navigation de rubriques ----------
@@ -699,6 +789,10 @@ function startViewer() {
       const { createViewer } = await import('./viewer.js');
       S.viewer = await createViewer(host, {
         base: '../model/',
+        targetId: S.data.localisation.cible,
+        zone: S.data.zone,
+        label: S.data.reference,
+        linkFor: (slug) => passportHref(slug),
         onMode: (m) => { host.dataset.mode = m; $$('.viewer-tools [data-mode]', host).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === m))); }
       });
     } catch (e) {
@@ -723,7 +817,6 @@ async function refresh() {
   if (!api.configured()) { S.mode = 'offline'; S.live = null; renderDynamic(); return; }
   try {
     S.live = await api.loadState(REF);
-    if (!S.live.ouvrage) throw new Error("L'ouvrage n'existe pas encore dans la base de suivi.");
     S.mode = 'live';
   } catch (e) {
     console.warn(e);
@@ -746,11 +839,42 @@ async function refreshUser(user) {
   $('#btn-login').dataset.state = user ? 'in' : 'out';
 }
 
+// ---------- données de référence ----------
+function expand(rec, commun) {
+  const d = { ...rec };
+  d.fiabilites = rec.fiabilites || commun.fiabilites;
+  d.statuts = rec.statuts || commun.statuts;
+  d.projet = rec.projet || commun.projet;
+  d.documents = (rec.documents || []).map(x => (x.titre ? x : { ...(commun.documents[x.id] || { titre: x.id, categorie: 'Autres documents', fiab: 'nd' }), ...x }));
+  d.avertissements = rec.avertissements || [];
+  return d;
+}
+function personalize() {
+  const d = S.data;
+  const zl = { A1: 'Tour A1', A2: 'Tour A2', LT: 'Tour A1', PARK: 'Parking', FOND: 'Fondations', EXT: 'Extérieurs' }[d.zone] || 'Zone';
+  bind('v-zone').forEach(n => { n.textContent = zl; });
+  const et = d.etage === 'RDC' ? 'RDC' : d.etage;
+  bind('v-coupe').forEach(n => { n.textContent = ['PARK', 'FOND', 'EXT'].includes(d.zone) ? 'Coupe' : `Coupe ${et}`; });
+  bind('v-label').forEach(n => { n.textContent = d.reference; });
+  bind('plan-caption').forEach(n => {
+    n.textContent = (['A1', 'A2', 'LT'].includes(d.zone) ? 'Coupe horizontale à 1,20 m au-dessus du plancher, générée depuis la maquette.' : 'Coupe horizontale de chaque élément à mi-hauteur, générée depuis la maquette.') + ' Nord du projet vers le haut. Touchez un ouvrage pour ouvrir son passeport.';
+  });
+}
+
 // ---------- démarrage ----------
 async function main() {
-  const res = await fetch(`../data/${REF}.json`, { cache: 'no-cache' });
-  S.data = await res.json();
-  document.title = `${S.data.reference} — Passeport numérique`;
+  if (!REF) { location.replace('../'); return; }
+  const [res, rc] = await Promise.all([fetch(`../data/o/${encodeURIComponent(REF)}.json`, { cache: 'no-cache' }), fetch('../data/commun.json', { cache: 'no-cache' })]);
+  if (!res.ok) {
+    document.body.prepend(el('p', { class: 'fatal' }, `Aucun passeport ne porte la référence « ${REF} ». `, el('a', { href: '../', text: 'Rechercher un ouvrage' })));
+    return;
+  }
+  S.data = expand(await res.json(), await rc.json());
+  document.title = `${S.data.reference} — Passeport numérique · Domaine de Fontbelleau`;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', `Passeport numérique de l'ouvrage ${S.data.reference} (${S.data.designation}, ${S.data.contexte}) : identité, localisation 3D, documents, approvisionnement, planning et suivi de chantier.`);
+  personalize();
+  setupQr();
+  bind('back-maquette').forEach(a => { a.href = `../?o=${encodeURIComponent(REF)}`; });
   bind('foot-ids')[0].textContent = S.data.identite.find(r => r.cle === 'identifiants')?.detail || '';
   renderLegend();
   wireDialogs();

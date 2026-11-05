@@ -267,6 +267,28 @@ select * from (values
 ) as v(ref, type, texte, auteur, fictif, cree_le)
 where not exists (select 1 from public.notes where ref = 'A2-PM106' and fictif);
 
+-- 7 bis. Passeports de tous les ouvrages : ligne de suivi créée au premier geste d'un éditeur ---
+create or replace function public.initialiser_ouvrage(p_ref text, p_statut text, p_maj_le timestamptz default null,
+                                                      p_evenements jsonb default '[]'::jsonb)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare ev jsonb;
+begin
+  if not public.est_editeur() then raise exception 'not allowed: votre compte n''est pas éditeur'; end if;
+  if p_ref is null or p_ref !~ '^[A-Za-z0-9._-]{1,80}$' then raise exception 'Référence d''ouvrage invalide'; end if;
+  insert into ouvrages(ref, statut, maj_le, maj_par)
+  values (p_ref, coalesce(p_statut, 'a_commander'), coalesce(p_maj_le, now()), 'Scénario de démonstration')
+  on conflict (ref) do nothing;
+  if not found then return false; end if;
+  for ev in select * from jsonb_array_elements(coalesce(p_evenements, '[]'::jsonb)) loop
+    insert into evenements(ref, type, ancien, nouveau, commentaire, auteur, fictif, cree_le)
+    values (p_ref, 'statut', ev->>'ancien', ev->>'nouveau', ev->>'commentaire', 'Scénario de démonstration', true,
+            coalesce((ev->>'cree_le')::timestamptz, now()));
+  end loop;
+  return true;
+end $$;
+revoke all on function public.initialiser_ouvrage(text, text, timestamptz, jsonb) from public, anon;
+grant execute on function public.initialiser_ouvrage(text, text, timestamptz, jsonb) to authenticated;
+
 -- 8. Tableau de contrôle : chaque ligne doit afficher OK -----------------
 select 'Tables du suivi' as element,
        case when (select count(*) from information_schema.tables where table_schema = 'public'
