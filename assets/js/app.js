@@ -655,15 +655,18 @@ function wireDialogs() {
     if (act === 'change-status') openStatus();
     else if (act === 'add-note') $('#dlg-note').showModal();
     else if (act === 'add-doc') openDocUpload();
+    else if (act === 'qr') openQr();
     else if (act === 'focus3d') { $('#viewer').scrollIntoView({ behavior: 'smooth', block: 'center' }); S.viewer?.focus(); }
     else if (act === 'isoler3d') { $('#viewer').scrollIntoView({ behavior: 'smooth', block: 'center' }); S.viewer?.setMode('isoler'); }
   });
 
-  $('#btn-login').addEventListener('click', openLogin);
-  $('#btn-qr').addEventListener('click', () => {
+  function openQr() {
     bind('qr-url')[0].textContent = canonicalUrl();
     $('#dlg-qr').showModal();
-  });
+  }
+
+  $('#btn-login').addEventListener('click', openLogin);
+  $('#btn-qr').addEventListener('click', openQr);
 
   $$('[data-filter]').forEach(b => b.addEventListener('click', () => {
     S.noteFilter = b.dataset.filter;
