@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A2 PM 106 — Passeport numérique · Domaine de Fontbelleau</title>
+<meta name="description" content="Passeport numérique de l'ouvrage A2 PM 106 (prémur du noyau R+1, tour A2) : identité, localisation 3D, documents, approvisionnement, planning et suivi de chantier.">
+<meta name="theme-color" content="#e6e8e5">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/archivo-wdth.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/bss-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/css/app.css">
+<script src="../config.js"></script>
+<script src="../assets/vendor/supabase.umd.js" defer></script>
+<script type="importmap">{ "imports": { "three": "../assets/vendor/three.module.min.js" } }</script>
+<script type="module" src="../assets/js/app.js"></script>
+</head>
+<body data-ref="A2-PM106">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-tower" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="6" ry="2"/><path d="M6 5v14c0 1.1 2.7 2 6 2s6-.9 6-2V5"/><path d="M6 10c0 1.1 2.7 2 6 2s6-.9 6-2M6 15c0 1.1 2.7 2 6 2s6-.9 6-2"/></symbol>
+    <symbol id="i-site" viewBox="0 0 24 24"><path d="M3 19h18"/><path d="M5 19V9l4-2v12M11 19V5l6-2v16"/><path d="M14 7h1M14 10h1M14 13h1"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></symbol>
+    <symbol id="i-cut" viewBox="0 0 24 24"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/><path d="M2 12h20" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></symbol>
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<header class="topbar">
+  <a class="brand" href="../">
+    <img class="brand-logo" src="../assets/img/veck-construction-640.png" width="640" height="119" alt="Veck Construction">
+    <span class="brand-sep" aria-hidden="true"></span>
+    <span class="brand-text"><span class="brand-name"><span class="hide-s">Domaine de </span>Fontbelleau</span><span class="brand-sub">Passeport numérique d'ouvrage</span></span>
+  </a>
+  <span class="demo-flag" title="Les données fictives de démonstration sont hachurées dans tout le passeport.">Démonstrateur</span>
+  <div class="account">
+    <button class="btn btn-quiet" id="btn-qr" type="button"><svg class="ico"><use href="#i-qr"/></svg><span>QR code</span></button>
+    <button class="btn btn-quiet" id="btn-login" type="button"><svg class="ico"><use href="#i-user"/></svg><span data-bind="login-label">Se connecter</span></button>
+  </div>
+</header>
+
+<main id="contenu">
+  <section class="hero" aria-labelledby="ref-title">
+    <div class="plate">
+      <p class="plate-context" data-bind="context">Tour A2, étage R+1, noyau central</p>
+      <h1 class="mark" id="ref-title"><span data-bind="reference">A2 PM 106</span>
+        <svg class="spray" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 15 C 70 6, 150 20, 230 11 S 360 9, 396 13"/></svg>
+      </h1>
+      <p class="designation" data-bind="designation">Prémur — voile du noyau central, étage R+1</p>
+
+      <div class="state" aria-live="polite">
+        <div class="state-head">
+          <span class="state-label">Statut actuel</span>
+          <span class="pill" data-bind="status-pill">Chargement…</span>
+        </div>
+        <ol class="steps" data-bind="steps" aria-label="Étapes de l'ouvrage"></ol>
+        <p class="state-meta" data-bind="status-meta"></p>
+      </div>
+
+      <div class="next" data-bind="next"></div>
+
+      <div class="hero-actions">
+        <button class="btn btn-ink" type="button" data-action="focus3d"><svg class="ico"><use href="#i-target"/></svg>Situer dans la maquette</button>
+        <button class="btn btn-line" type="button" data-action="change-status" hidden><svg class="ico"><use href="#i-edit"/></svg>Changer le statut</button>
+      </div>
+    </div>
+
+    <div class="viewer" id="viewer" data-mode="coupe">
+      <div class="viewer-canvas" data-v="canvas"></div>
+      <div class="viewer-status" data-v="status" role="status">Préparation de la vue 3D</div>
+      <div class="viewer-label" data-v="label" hidden><span>A2 PM 106</span></div>
+      <div class="viewer-tip" data-v="tip" hidden></div>
+      <div class="compass" aria-hidden="true"><span data-v="needle"><i></i></span><b>N</b></div>
+      <div class="viewer-tools" role="toolbar" aria-label="Vues 3D">
+        <button type="button" data-mode="situation" aria-pressed="false"><svg class="ico"><use href="#i-site"/></svg><span>Situation</span></button>
+        <button type="button" data-mode="tour" aria-pressed="false"><svg class="ico"><use href="#i-tower"/></svg><span>Tour A2</span></button>
+        <button type="button" data-mode="isoler" aria-pressed="false"><svg class="ico"><use href="#i-target"/></svg><span>Isoler</span></button>
+        <button type="button" data-mode="coupe" aria-pressed="true"><svg class="ico"><use href="#i-cut"/></svg><span>Coupe R+1</span></button>
+        <span class="sep" aria-hidden="true"></span>
+        <button type="button" data-v-action="replay" title="Rejouer l'apparition"><svg class="ico"><use href="#i-replay"/></svg><span>Rejouer</span></button>
+        <button type="button" data-v-action="fullscreen" title="Plein écran"><svg class="ico"><use href="#i-expand"/></svg><span>Plein écran</span></button>
+      </div>
+      <p class="viewer-hint">Géométrie extraite de la maquette Revit. Touchez un élément pour l'identifier.</p>
+    </div>
+  </section>
+
+  <nav class="secnav" aria-label="Rubriques du passeport">
+    <ul>
+      <li><a href="#identite">Identité</a></li>
+      <li><a href="#localisation">Localisation</a></li>
+      <li><a href="#documents">Documents</a></li>
+      <li><a href="#approvisionnement">Approvisionnement</a></li>
+      <li><a href="#planning">Planning</a></li>
+      <li><a href="#suivi">Suivi de chantier</a></li>
+    </ul>
+  </nav>
+
+  <section class="sec" id="identite" aria-labelledby="h-identite">
+    <header class="sec-head">
+      <h2 id="h-identite">Identité de l'ouvrage</h2>
+      <p>Chaque valeur indique d'où elle vient et son niveau de fiabilité.</p>
+      <ul class="legend" data-bind="legend"></ul>
+    </header>
+    <div class="sec-body">
+      <div class="warnings" data-bind="warnings"></div>
+      <dl class="sheet" data-bind="identite"></dl>
+    </div>
+  </section>
+
+  <section class="sec" id="localisation" aria-labelledby="h-loc">
+    <header class="sec-head">
+      <h2 id="h-loc">Localisation</h2>
+      <p data-bind="loc-resume"></p>
+      <dl class="alt" data-bind="loc-alt"></dl>
+    </header>
+    <div class="sec-body loc-body">
+      <figure class="plan">
+        <div class="plan-tools" role="group" aria-label="Cadrage du plan">
+          <button type="button" class="chip-btn" data-plan="noyau" aria-pressed="true">Noyau</button>
+          <button type="button" class="chip-btn" data-plan="tour" aria-pressed="false">Tour entière</button>
+        </div>
+        <div class="plan-svg" data-bind="plan"></div>
+        <figcaption>Coupe horizontale à 1,42 m au-dessus du plancher R+1, générée depuis la maquette. Nord du projet vers le haut.</figcaption>
+      </figure>
+      <div>
+        <h3 class="sub">Ouvrages au contact</h3>
+        <ul class="neighbours" data-bind="voisins"></ul>
+        <p class="src-line" data-bind="loc-src"></p>
+        <button class="btn btn-line" type="button" data-action="isoler3d"><svg class="ico"><use href="#i-target"/></svg>Voir le noyau en 3D</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="documents" aria-labelledby="h-docs">
+    <header class="sec-head">
+      <h2 id="h-docs">Documents techniques</h2>
+      <p>Les pièces du DCE s'ouvrent après connexion. Les documents absents du dossier sont listés pour être demandés.</p>
+      <button class="btn btn-line" type="button" data-action="add-doc" hidden><svg class="ico"><use href="#i-plus"/></svg>Ajouter un document</button>
+    </header>
+    <div class="sec-body" data-bind="documents"></div>
+  </section>
+
+  <section class="sec" id="approvisionnement" aria-labelledby="h-appro">
+    <header class="sec-head">
+      <h2 id="h-appro">Approvisionnement et commande</h2>
+      <p>Aucune pièce de marché ni bon de commande dans le dossier : cette rubrique suit un scénario fictif.</p>
+    </header>
+    <div class="sec-body">
+      <dl class="sheet" data-bind="appro"></dl>
+      <h3 class="sub">Dates de commande et de livraison</h3>
+      <div class="dates-table" data-bind="appro-dates"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="planning" aria-labelledby="h-plan">
+    <header class="sec-head">
+      <h2 id="h-plan">Planning et mise en œuvre</h2>
+      <p>Dates contractuelles, prévisionnelles et réelles de chaque jalon.</p>
+      <ul class="date-legend">
+        <li><i class="dk dk-c"></i>Contractuelle</li>
+        <li><i class="dk dk-p"></i>Prévisionnelle</li>
+        <li><i class="dk dk-r"></i>Réelle</li>
+      </ul>
+    </header>
+    <div class="sec-body">
+      <div class="timeline" data-bind="timeline"></div>
+      <dl class="sheet" data-bind="plan-infos"></dl>
+      <div class="deps" data-bind="deps"></div>
+      <div class="checks" data-bind="controles"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="suivi" aria-labelledby="h-suivi">
+    <header class="sec-head">
+      <h2 id="h-suivi">Suivi de chantier</h2>
+      <p data-bind="suivi-intro"></p>
+      <p class="live" data-bind="live"></p>
+    </header>
+    <div class="sec-body suivi">
+      <div class="track">
+        <h3 class="sub">Statut</h3>
+        <ol class="track-list" data-bind="track"></ol>
+        <button class="btn btn-ink" type="button" data-action="change-status" hidden><svg class="ico"><use href="#i-edit"/></svg>Changer le statut</button>
+      </div>
+      <div class="notes-col">
+        <div class="notes-head">
+          <h3 class="sub">Remarques, observations et réserves</h3>
+          <button class="btn btn-line" type="button" data-action="add-note" hidden><svg class="ico"><use href="#i-plus"/></svg>Ajouter</button>
+        </div>
+        <div class="filters" role="group" aria-label="Filtrer">
+          <button type="button" class="chip-btn" data-filter="tout" aria-pressed="true">Tout</button>
+          <button type="button" class="chip-btn" data-filter="remarque" aria-pressed="false">Remarques</button>
+          <button type="button" class="chip-btn" data-filter="observation" aria-pressed="false">Observations</button>
+          <button type="button" class="chip-btn" data-filter="reserve" aria-pressed="false">Réserves</button>
+        </div>
+        <ul class="notes" data-bind="notes"></ul>
+
+        <div class="notes-head">
+          <h3 class="sub">Photos</h3>
+          <label class="btn btn-line" data-action="add-photo" hidden><svg class="ico"><use href="#i-camera"/></svg>Ajouter une photo<input type="file" accept="image/*" capture="environment" hidden></label>
+        </div>
+        <div class="photos" data-bind="photos"></div>
+
+        <h3 class="sub">Historique des modifications</h3>
+        <ol class="history" data-bind="history"></ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div>
+    <p><strong data-bind="reference">A2 PM 106</strong> — <span data-bind="foot-ids"></span></p>
+    <p data-bind="foot-maj"></p>
+  </div>
+  <p class="foot-note">Démonstrateur Veck Construction, réalisé dans le cadre du projet ESCT MP2-BC1-P3 Transition numérique. Les données fictives sont hachurées ; elles ne proviennent d'aucun document du projet.</p>
+</footer>
+
+<div class="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog class="dlg" id="dlg-login" aria-labelledby="dlg-login-t">
+  <form method="dialog" class="dlg-body" data-form="login">
+    <header><h2 id="dlg-login-t">Connexion</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <div data-login="out">
+      <p>Recevez un lien de connexion par e-mail. Les personnes autorisées peuvent ensuite ouvrir les plans et mettre à jour le suivi.</p>
+      <label class="field">Adresse e-mail<input type="email" name="email" autocomplete="email" required placeholder="prenom.nom@exemple.fr"></label>
+      <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="send">Recevoir le lien</button></div>
+    </div>
+    <div data-login="in" hidden>
+      <p data-bind="who"></p>
+      <div class="dlg-actions"><button class="btn btn-line" type="button" data-action="logout">Se déconnecter</button></div>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlg-status" aria-labelledby="dlg-status-t">
+  <form method="dialog" class="dlg-body" data-form="status">
+    <header><h2 id="dlg-status-t">Changer le statut</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <fieldset class="status-choices" data-bind="status-choices"><legend>Nouveau statut</legend></fieldset>
+    <label class="field">Commentaire (facultatif)<textarea name="commentaire" rows="3" placeholder="Ex. : levé et réglé, étais posés"></textarea></label>
+    <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="save">Enregistrer le statut</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlg-note" aria-labelledby="dlg-note-t">
+  <form method="dialog" class="dlg-body" data-form="note">
+    <header><h2 id="dlg-note-t">Ajouter une note</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <label class="field">Type<select name="type"><option value="remarque">Remarque</option><option value="observation">Observation de chantier</option><option value="reserve">Réserve</option></select></label>
+    <label class="field">Texte<textarea name="texte" rows="4" required></textarea></label>
+    <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="save">Ajouter la note</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlg-field" aria-labelledby="dlg-field-t">
+  <form method="dialog" class="dlg-body" data-form="field">
+    <header><h2 id="dlg-field-t">Mettre à jour</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <p class="field-label" data-bind="field-label"></p>
+    <label class="field">Nouvelle valeur<input name="valeur" required></label>
+    <label class="field">Source de l'information<input name="source" required placeholder="Ex. : bon de livraison n° 1234, constat du 18/11"></label>
+    <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="save">Enregistrer</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlg-photo" aria-labelledby="dlg-photo-t">
+  <form method="dialog" class="dlg-body" data-form="photo">
+    <header><h2 id="dlg-photo-t">Ajouter une photo</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <img class="photo-preview" data-bind="photo-preview" alt="Aperçu de la photo choisie">
+    <label class="field">Légende (facultatif)<input name="legende" placeholder="Ex. : peau côté escalier après reprise"></label>
+    <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="save">Envoyer la photo</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlg-doc" aria-labelledby="dlg-doc-t">
+  <form method="dialog" class="dlg-body" data-form="doc">
+    <header><h2 id="dlg-doc-t">Ajouter un document</h2><button class="x" value="cancel" aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <label class="field">Catégorie<select name="categorie"></select></label>
+    <label class="field">Titre<input name="titre" required></label>
+    <label class="field">Référence et indice<input name="ref_doc" placeholder="Ex. : FER-A2-106 ind A"></label>
+    <label class="field">Fichier PDF<input type="file" name="fichier" accept="application/pdf" required></label>
+    <div class="dlg-actions"><button class="btn btn-ink" type="submit" value="save">Téléverser</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg dlg-wide" id="dlg-pdf" aria-labelledby="dlg-pdf-t">
+  <div class="dlg-body pdf-body">
+    <header><h2 id="dlg-pdf-t">Document</h2>
+      <div class="pdf-actions"><a class="btn btn-line" data-bind="pdf-dl" download><svg class="ico"><use href="#i-download"/></svg>Télécharger</a><a class="btn btn-line" data-bind="pdf-tab" target="_blank" rel="noopener"><svg class="ico"><use href="#i-open"/></svg>Nouvel onglet</a>
+      <button class="x" type="button" data-close aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></div>
+    </header>
+    <iframe title="Aperçu du document" data-bind="pdf-frame"></iframe>
+  </div>
+</dialog>
+
+<dialog class="dlg" id="dlg-qr" aria-labelledby="dlg-qr-t">
+  <div class="dlg-body">
+    <header><h2 id="dlg-qr-t">QR code de l'ouvrage</h2><button class="x" type="button" data-close aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <img class="qr-img" src="../qr/A2-PM106.svg" alt="QR code menant au passeport A2 PM 106" width="240" height="240">
+    <p class="qr-url" data-bind="qr-url"></p>
+    <div class="dlg-actions wrap">
+      <a class="btn btn-line" href="../qr/A2-PM106.png" download><svg class="ico"><use href="#i-download"/></svg>PNG</a>
+      <a class="btn btn-line" href="../qr/A2-PM106.svg" download><svg class="ico"><use href="#i-download"/></svg>SVG</a>
+      <a class="btn btn-ink" href="../qr/Etiquette_A2-PM106.pdf" download><svg class="ico"><use href="#i-download"/></svg>Étiquette à imprimer</a>
+    </div>
+  </div>
+</dialog>
+</body>
+</html>
