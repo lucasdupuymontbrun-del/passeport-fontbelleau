@@ -50,7 +50,7 @@
     {
       "type": "modele",
       "titre": "Homonyme dans la tour A1",
-      "texte": "Un voile identique est repéré « PM 106 » sans préfixe dans la tour A1 (élément Revit 318104). Utilisez toujours la référence complète « A2 PM 106 »."
+      "texte": "Un voile identique existe dans la tour A1 (élément Revit 318104). Il était repéré « PM 106 » sans préfixe ; il a été renommé « A1 PM 106 » dans la maquette le 05/11/2026. Utilisez toujours la référence complète « A2 PM 106 »."
     }
   ],
   "identite": [
@@ -212,7 +212,7 @@
       "cle": "identifiants",
       "label": "Identifiants numériques",
       "valeur": "Revit 439362",
-      "detail": "IfcGUID 21CsQ7oYD2zhGAPXBBKsYr ; UniqueId 81336687-ca23-42f6-b40a-6612cb55dcf7-0006b442.",
+      "detail": "IfcGUID 21CsQ7oYD2zhGAPXBBKsYr ; UniqueId 81336687-ca23-42f6-b40a-6612cb55dcf7-0006b442. Paramètres « Passeport - URL » et « Passeport - Statut » renseignés dans la maquette.",
       "fiab": "modele",
       "sources": [
         "Maquette"

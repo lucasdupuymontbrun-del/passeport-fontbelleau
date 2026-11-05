@@ -112,7 +112,22 @@ python tools/build_plan.py
 
 3. Publier (commit) `model/` et `plans/`. Ne pas publier `export3d/`.
 
+## 6 bis. Lien avec la maquette Revit
+
+Deux paramètres partagés d'occurrence sont liés à la catégorie **Murs** (groupe « Données d'identification ») :
+
+| Paramètre | Type | GUID | Valeur sur A2 PM 106 (élément 439362) |
+|---|---|---|---|
+| Passeport - URL | URL | `e6cc7f1e-27bd-4971-b505-58a6f7b52222` | adresse du passeport (cliquable dans les propriétés Revit) |
+| Passeport - Statut | Texte | `12091e0f-3f00-46be-aa97-e24d3c9e04b3` | copie du statut de suivi |
+
+Leur définition est dans un fichier séparé, `Documents\FONTBELLEAU_terrain\scripts\PASSEPORT_params_partages.txt` ; le fichier de paramètres partagés habituel du projet n'a pas été modifié. Le voile jumeau de la tour A1 (élément 318104) a été renommé « A1 PM 106 » pour lever l'homonymie.
+
+Le passeport en ligne reste la source de vérité du statut : « Passeport - Statut » est une copie, à mettre à jour à la main dans Revit lors des jalons importants (livraison, pose, réception). Après toute modification, **Synchroniser avec le fichier central**.
+
 ## 7. QR code
+
+Adresse actuelle : `https://lucasdupuymontbrun-del.github.io/passeport-fontbelleau/A2-PM106/`.
 
 Le QR code contient l'adresse **permanente** `https://<compte>.github.io/<dépôt>/A2-PM106/`. Il ne change pas quand les données changent. Il faut le régénérer seulement si l'adresse du site change :
 
