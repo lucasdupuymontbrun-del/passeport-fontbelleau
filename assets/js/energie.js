@@ -854,6 +854,10 @@ async function main() {
     S.twin.state.plan = on; S.twin.setFloor(S.floor); paint();
   });
   $('[data-close-detail]').addEventListener('click', closeDetail);
+  const dq = $('#dlg-qr');
+  $('#btn-qr').addEventListener('click', () => { stop(); dq.showModal(); });
+  dq.querySelector('[data-close]').addEventListener('click', () => dq.close());
+  dq.addEventListener('click', (e) => { if (e.target === dq) dq.close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#detail').hidden) closeDetail(); });
 
   // état initial

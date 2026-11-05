@@ -60,7 +60,10 @@ def label_pdf(qr, url, ref, title, place, logo=None):
     c.setFillColor(HexColor(PINK)); c.rect(3 * mm, H - 13 * mm, W - 6 * mm, 10 * mm, stroke=0, fill=1)
     c.setFillColor(HexColor('#ffffff')); c.setFont('Archivo-Bold', 10)
     projet = ref.startswith('Projet')
-    c.drawString(8 * mm, H - 9.6 * mm, 'Maquette numérique du projet — Domaine de Fontbelleau' if projet else 'Passeport numérique d\'ouvrage — Domaine de Fontbelleau')
+    jumeau = ref.startswith('Jumeau')
+    head = ('Jumeau énergétique — Domaine de Fontbelleau' if jumeau else
+            'Maquette numérique du projet — Domaine de Fontbelleau' if projet else 'Passeport numérique d\'ouvrage — Domaine de Fontbelleau')
+    c.drawString(8 * mm, H - 9.6 * mm, head)
     # QR (dessiné en vecteurs, sans perte)
     size = 62 * mm
     x0, y0 = W - size - 9 * mm, 14 * mm
@@ -96,18 +99,18 @@ def label_pdf(qr, url, ref, title, place, logo=None):
         c.drawString(9 * mm, H - 44 * mm - k_ * 4.6 * mm, ln)
     c.setFont('Archivo-Bold', 13); c.setFillColor(HexColor(INK))
     c.drawString(9 * mm, 38 * mm, 'Scannez pour ouvrir')
-    c.drawString(9 * mm, 32 * mm, 'la maquette du projet' if projet else 'le passeport de l\'ouvrage')
+    c.drawString(9 * mm, 32 * mm, 'le jumeau énergétique' if jumeau else 'la maquette du projet' if projet else 'le passeport de l\'ouvrage')
     c.setFont('Archivo', 8.5); c.setFillColor(HexColor('#56616a'))
-    c.drawString(9 * mm, 24 * mm, 'Touchez un ouvrage pour voir sa fiche.' if projet else 'Identité, plans, planning et suivi.')
+    c.drawString(9 * mm, 24 * mm, 'Consommations des 129 logements en 3D.' if jumeau else 'Touchez un ouvrage pour voir sa fiche.' if projet else 'Identité, plans, planning et suivi.')
     c.drawString(9 * mm, 20 * mm, 'Aucune application à installer.')
     short = url.replace('https://', '')
     c.setFont('Archivo', 6.5)
     if c.stringWidth(short, 'Archivo', 6.5) <= size:
         c.drawCentredString(x0 + size / 2, 9 * mm, short)
     else:
-        host, _, path = short.partition('/')
+        host, _, rest = short.partition('/')
         c.drawCentredString(x0 + size / 2, 10.6 * mm, host)
-        c.drawCentredString(x0 + size / 2, 7.6 * mm, '/' + path)
+        c.drawCentredString(x0 + size / 2, 7.6 * mm, '/' + rest)
     if logo and os.path.exists(logo):
         from reportlab.lib.utils import ImageReader
         img = ImageReader(logo)

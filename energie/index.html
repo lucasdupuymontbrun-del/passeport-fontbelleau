@@ -38,6 +38,8 @@
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
     <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></symbol>
     <symbol id="i-plan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6M12 12l-7.4 4.3"/></symbol>
   </defs>
 </svg>
@@ -52,6 +54,7 @@
   <span class="flag" title="Les consommations sont simulées pour la démonstration : première année d'exploitation après la livraison prévue au scénario du chantier.">Données simulées</span>
   <nav class="top-links" aria-label="Autres vues">
     <a class="btn btn-ghost" href="../"><svg class="ico"><use href="#i-layers"/></svg><span>Maquette du projet</span></a>
+    <button class="btn btn-ghost" type="button" id="btn-qr"><svg class="ico"><use href="#i-qr"/></svg><span>QR code</span></button>
     <a class="btn btn-ghost hide-s" href="#methode"><svg class="ico"><use href="#i-info"/></svg><span>Méthode</span></a>
   </nav>
 </header>
@@ -239,5 +242,18 @@
 </main>
 
 <div class="toast" role="status" aria-live="polite" hidden></div>
+
+<dialog class="dlg" id="dlg-qr" aria-labelledby="dlg-qr-t">
+  <div class="dlg-body">
+    <header><h2 id="dlg-qr-t">QR code du jumeau énergétique</h2><button class="x" type="button" data-close aria-label="Fermer"><svg class="ico"><use href="#i-close"/></svg></button></header>
+    <img class="qr-img" src="../qr/Jumeau-Energetique.svg" alt="QR code menant au jumeau énergétique" width="260" height="260">
+    <p class="qr-url">lucasdupuymontbrun-del.github.io/passeport-fontbelleau/energie/</p>
+    <div class="dlg-actions">
+      <a class="btn" href="../qr/Jumeau-Energetique.png" download><svg class="ico"><use href="#i-download"/></svg>PNG</a>
+      <a class="btn" href="../qr/Jumeau-Energetique.svg" download><svg class="ico"><use href="#i-download"/></svg>SVG</a>
+      <a class="btn btn-solid" href="../qr/Etiquette_Jumeau-Energetique.pdf" download><svg class="ico"><use href="#i-download"/></svg>Étiquette à imprimer</a>
+    </div>
+  </div>
+</dialog>
 </body>
 </html>

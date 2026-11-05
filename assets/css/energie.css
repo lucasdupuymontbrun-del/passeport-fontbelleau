@@ -390,6 +390,17 @@ a { color: inherit; }
 }
 .toast[hidden] { display: none; }
 
+/* ---------- fenêtre QR ---------- */
+.dlg { border: 1px solid var(--trait-fort); border-radius: 16px; padding: 0; background: var(--nuit-2); color: var(--encre); max-width: min(420px, 92vw); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); }
+.dlg::backdrop { background: rgba(4, 6, 8, .7); backdrop-filter: blur(4px); }
+.dlg-body { padding: 20px; display: grid; gap: 14px; justify-items: center; }
+.dlg-body header { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.dlg-body h2 { margin: 0; font-size: 16px; }
+.dlg-body .x { position: static; }
+.qr-img { width: 260px; height: 260px; background: #fff; padding: 10px; border-radius: 12px; }
+.qr-url { margin: 0; font-size: 12.5px; color: var(--encre-2); text-align: center; overflow-wrap: anywhere; }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
 /* ---------- plein écran ---------- */
 .twin:fullscreen { height: 100vh; }
 
