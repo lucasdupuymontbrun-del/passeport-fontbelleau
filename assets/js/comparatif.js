@@ -17,7 +17,7 @@ const ELEMS = [
   { id: 'tv', label: 'Toiture végétalisée', postes: ['tv', 'grav'], gain: 'tv', maint: ['toit'] },
   { id: 'bc', label: 'Béton bas carbone', postes: ['bc'], gain: 'bc', maint: [] },
 ];
-const FIAB_CLASS = { maquette: 'fiab-modele', cctp: 'fiab-cctp', cctp_nm: 'fiab-cctpnm', variante: 'fiab-saisi', calcul: 'fiab-calc', estime: 'fiab-estime', cite: 'fiab-cite', hypothese: 'fiab-hypothese', budget: 'fiab-cctp', simule: 'fiab-fictif' };
+const FIAB_CLASS = { maquette: 'fiab-modele', cctp: 'fiab-cctp', cctp_nm: 'fiab-cctpnm', variante: 'fiab-saisi', calcul: 'fiab-calc', estime: 'fiab-estime', cite: 'fiab-cite', hypothese: 'fiab-hypothese', budget: 'fiab-cctp', simule: 'fiab-fictif', decision: 'fiab-choix' };
 const ECART = { identique: 'Identique', modifie: 'Modifié', ajoute: 'Ajouté', supprime: 'Supprimé', programme: 'Programme' };
 
 // ---------- utilitaires ----------
@@ -245,7 +245,7 @@ function renderKpis(R) {
     k('Surcoût de la variante', sign(R.delta), '€ HT', `${sign(R.delta / R.a1 * 100, 1)} % du coût de la tour`),
     k('Par logement de la tour A2', fmt(R.delta / n2), '€ HT', `${fmt(R.delta / D.tours.A2.shab)} € HT par m² habitable`),
     k('Énergie économisée', fmt(R.gain), '€/an', 'TTC, année 1 simulée'),
-    k('Bilan énergie − entretien', sign(R.net), '€/an', R.net < 0 ? 'La variante coûte plus cher à exploiter' : 'La variante coûte moins cher à exploiter', R.net < 0 ? 'is-neg' : 'is-pos'),
+    k('Bilan énergie − entretien', sign(R.net), '€/an', Math.abs(R.net) < 500 ? 'Proche de zéro (entretien : hypothèses)' : R.net < 0 ? 'La variante coûte plus cher à exploiter' : 'La variante coûte moins cher à exploiter', Math.abs(R.net) < 500 ? '' : R.net < 0 ? 'is-neg' : 'is-pos'),
     k('CO₂ évité en exploitation', fmt(R.co2 / 1000, 1), 't/an', 'Chaleur du réseau peu carbonée'));
 }
 
@@ -263,7 +263,7 @@ function renderAttention(R) {
   const host = bind('attention'); host.textContent = '';
   S.D.attention.forEach((a, i) => {
     let txt = a.texte;
-    if (i === 0) txt = `La variante économise ${fmt(R.gain)} € TTC d'énergie par an pour un surcoût de travaux estimé à ${fmt(R.delta)} € HT. Avec l'entretien supplémentaire (${fmt(R.maint)} €/an, hypothèses), le bilan annuel est de ${sign(R.net)} €. Elle se justifie par la RE2020, le confort et la qualité de l'air, pas par le coût d'usage.`;
+    if (i === 0) txt = `La variante économise ${fmt(R.gain)} € TTC d'énergie par an pour un surcoût de travaux estimé à ${fmt(R.delta)} € HT. Avec l'entretien supplémentaire (${fmt(R.maint)} €/an, hypothèses), le bilan annuel est de ${sign(R.net)} €${Math.abs(R.net) < 500 ? ', proche de zéro : les travaux ne sont pas remboursés par l\'usage' : ''}. Elle se justifie par la RE2020, le confort et la qualité de l'air, pas par le coût d'usage.`;
     host.append(el('div', { class: `warn warn-${a.niveau}` }, icon(a.niveau === 'info' ? 'i-info' : 'i-alert'), el('div', {}, el('strong', { text: a.titre }), el('p', { text: txt }))));
   });
 }
@@ -454,7 +454,7 @@ function renderSources() {
   const D = S.D;
   host.append(el('h3', { class: 'sub', text: 'Origine des valeurs' }));
   const leg = el('ul', { class: 'legend' });
-  const desc = { maquette: 'Mesuré dans la maquette (surface, volume, nombre).', cctp: 'Pièce du marché ou tableau des surfaces.', cctp_nm: 'Prévu au CCTP mais absent de la maquette : compté quand même.', variante: 'Modélisé par le groupe dans la maquette (tour A2).', calcul: 'Dérivé de la géométrie de la maquette.', estime: 'Dénombré par pièce et par typologie (plans CVC des logements types).', cite: 'Ratio de prix publié, source citée.', hypothese: 'Valeur de travail à confirmer.' };
+  const desc = { decision: 'Choix arrêté par le groupe après la modélisation : la maquette reste à mettre à jour.', maquette: 'Mesuré dans la maquette (surface, volume, nombre).', cctp: 'Pièce du marché ou tableau des surfaces.', cctp_nm: 'Prévu au CCTP mais absent de la maquette : compté quand même.', variante: 'Modélisé par le groupe dans la maquette (tour A2).', calcul: 'Dérivé de la géométrie de la maquette.', estime: 'Dénombré par pièce et par typologie (plans CVC des logements types).', cite: 'Ratio de prix publié, source citée.', hypothese: 'Valeur de travail à confirmer.' };
   for (const [k, t] of Object.entries(desc)) leg.append(el('li', {}, fiab(k), el('span', { text: t })));
   host.append(leg);
   host.append(el('h3', { class: 'sub', text: 'Méthode' }));

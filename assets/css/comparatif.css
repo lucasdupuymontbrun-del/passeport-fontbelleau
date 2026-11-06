@@ -145,6 +145,8 @@
 .table-wrap + .table-wrap, .card + .table-wrap { margin-top: 12px; }
 .fiab-cctpnm { background: #e2efe6; color: #1c5a39; border: 1px dashed #22764a; }
 .fiab-cctpnm::before { background: transparent; border: 1.5px solid var(--vert); border-radius: 50%; width: 6px; height: 6px; }
+.fiab-choix { background: var(--traceur); color: #fff; }
+.fiab-choix::before { background: #fff; border-radius: 1px; }
 .fiab-calc { background: #eceeed; color: #3c454b; }
 .fiab-calc::before { background: var(--ardoise); width: 8px; height: 2px; }
 .fiab-cctp { background: #e2efe6; color: #1c5a39; }

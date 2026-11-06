@@ -46,6 +46,7 @@ SOURCES = {
     'budget': {'titre': 'BUDGET.xlsx, onglet 2020.04.23 (dossier PE)', 'ref': 'Objectif par lot ; la colonne « tour A1 » vaut 50 % de chaque poste'},
     'etude': {'titre': 'Étude thermique RT 2012 (Home Inclusiv), citée par la présentation synthétique du DCE', 'ref': 'Pièce non jointe au dossier'},
     'var': {'titre': 'Variante RE2020 du groupe, modélisée dans la maquette (tour A2)', 'ref': 'Hors pièces du marché'},
+    'choix_cta': {'titre': 'Choix du groupe du 06/11/2026 : une centrale double flux unique en toiture', 'ref': 'Remplace les 3 CTA modélisées (2 590, 3 810 et 2 720 m³/h) ; maquette à mettre à jour'},
     'jumeau': {'titre': 'Jumeau énergétique Fontbelleau — année 1 simulée (oct. 2027 – sept. 2028)', 'ref': 'Données fictives, hypothèses documentées sur la page Méthode', 'url': '../energie/#methode'},
     'bt01': {'titre': 'Index BT01 tous corps d\'état (Insee), relevé ANIL', 'ref': 'Avril 2020 : 111,5 ; août 2026 : 139,4', 'url': 'https://www.anil.org/outils/indices-et-plafonds/indice-bt-01'},
     'ite_prix': {'titre': 'Construires.fr — coût d\'une ITE en 2026', 'ref': 'PSE graphité sous enduit : 100 à 150 €/m² TTC posé, + 15 à 25 % de frais annexes (échafaudage)', 'url': 'https://www.construires.fr/isolation-thermique-exterieure/'},
@@ -69,6 +70,7 @@ FIAB = {
     'hypothese': 'Hypothèse',
     'budget': 'Budget du dossier',
     'simule': 'Simulé (jumeau)',
+    'decision': 'Choix du groupe',
 }
 
 # ------------------------------------------------------------------ typologies (plans CVC cellules types)
@@ -297,8 +299,8 @@ def quantites(rows, fond, fronts, logs):
     # ---- ventilation
     G = 'Ventilation'
     add(G, 'Caissons d\'extraction VMC hygro B Atlantic Airvent PA', 'u', 3, 0, 'cctp_nm', 'variante', 'A1 : 4 390 + 4 280 + 4 065 m³/h. Base DCE de A2 : 4 095 + 3 315 + 3 280 m³/h', ['cctp502'])
-    add(G, 'Débit d\'extraction installé', 'm³/h', 4390 + 4280 + 4065, 2590 + 3810 + 2720, 'cctp_nm', 'variante', 'A2 : débit des trois CTA double flux', ['cctp502', 'var'])
-    add(G, 'Centrales double flux en toiture', 'u', 0, 3, 'cctp', 'variante', '2 590 (c1, c6), 3 810 (c3, c8, c9), 2 720 m³/h (c4, c5)', ['var'])
+    add(G, 'Débit d\'extraction installé', 'm³/h', 4390 + 4280 + 4065, 2590 + 3810 + 2720, 'cctp_nm', 'variante', 'A2 : débit de la centrale double flux unique (somme des 3 CTA modélisées)', ['cctp502', 'var'])
+    add(G, 'Centrale double flux en toiture (extérieure, 2 ventilateurs)', 'u', 0, 1, 'cctp', 'decision', 'Choix du groupe : une centrale de 9 120 m³/h desservant les 9 colonnes par un réseau en anneau. La maquette en contient encore 3 (2 590, 3 810 et 2 720 m³/h) : à mettre à jour', ['choix_cta', 'var'])
     add(G, 'Entrées d\'air hygroréglables acoustiques EH 5/45', 'u', per_typo('A1', 'pp'), 0, 'estime', 'variante', '1 par pièce principale (tableau CCTP §4.4.5) ; supprimées en double flux', ['cctp502', 'cvc_cellules'])
     add(G, 'Bouches d\'extraction (cuisine, bains, WC, buanderie)', 'u', per_typo('A1', 'bouches'), per_typo('A2', 'bouches'), 'estime', 'estime', 'Hygroréglables BH / BHC / BAWC en A1', ['cctp502', 'cvc_cellules'])
     add(G, 'Bouches de soufflage', 'u', 0, per_typo('A2', 'pp'), 'cctp', 'estime', '1 par pièce principale', ['var', 'cvc_cellules'])
@@ -339,7 +341,7 @@ def lots(k):
             ('Eau chaude solaire', '—', f"{k['sol_m2']:.0f} m² de capteurs plans, ballon solaire 1 500 L (préchauffage)", 'ajoute', ['var']),
         ]),
         ('503', 'Ventilation', [
-            ('Système', 'VMC simple flux hygroréglable B, 3 caissons Airvent PA (12 735 m³/h)', 'Double flux : 3 CTA en toiture (9 120 m³/h), récupération de chaleur', 'modifie', ['cctp502', 'var']),
+            ('Système', 'VMC simple flux hygroréglable B, 3 caissons Airvent PA (12 735 m³/h)', 'Double flux : une centrale unique en toiture (9 120 m³/h), extérieure, à deux ventilateurs, réseau en anneau vers les 9 colonnes', 'modifie', ['cctp502', 'choix_cta']),
             ('Amenées d\'air', 'Entrées d\'air EH 5/45 dans les menuiseries', 'Soufflage par bouches dans les pièces principales', 'modifie', ['cctp502', 'var']),
         ]),
         ('504', 'Plomberie, sanitaires', [
@@ -368,7 +370,7 @@ def couts(k):
         ('tv', '402', 'Végétalisation extensive', k['tv_A2'], 'm²', 55, 'cite', ['tv_prix'], '40 à 70 € HT/m² hors étanchéité (valeur 2019)', (40, 70)),
         ('grav', '402', 'Protection gravillons supprimée', k['tv_A2'], 'm²', -8, 'hypothese', [], '', (-12, -5)),
         ('vr', '417', 'Coffres de volet roulant isolés et étanches', k['fe_A2'], 'u', 60, 'hypothese', [], 'Surcoût par fenêtre', (30, 100)),
-        ('df', '502', 'VMC double flux collective (CTA, réseaux, bouches)', k['n2'], 'logement', 3000, 'cite', ['df_prix'], '≈ 2 300 € HT en logement neuf individuel (ADEME) ; majoré pour les CTA et les réseaux verticaux', (2300, 4000)),
+        ('df', '502', 'VMC double flux collective (centrale unique, réseaux, bouches)', k['n2'], 'logement', 3000, 'cite', ['df_prix'], '≈ 2 300 € HT en logement neuf individuel (ADEME) ; majoré pour la centrale en toiture et les réseaux verticaux. Ratio inchangé avec une centrale unique : machine un peu moins chère, réseau en toiture plus long', (2300, 4000)),
         ('sf', '502', 'VMC hygro B supprimée (caissons, entrées d\'air, bouches)', k['n2'], 'logement', -800, 'cite', ['sf_prix'], '≈ 800 € HT en logement neuf (VMC hygroréglable)', (-1000, -600)),
         ('sol', '502', 'Eau chaude solaire : capteurs, ballon 1 500 L, station', k['sol_m2'], 'm²', 1200, 'cite', ['solaire_prix'], 'Installations collectives de moins de 50 m²', (900, 1500)),
     ]
@@ -379,6 +381,8 @@ def couts(k):
          'note': 'À valider par le BET thermique (ponts thermiques résiduels, règles RE2020)'},
         {'poste': 'Traiter les liaisons de balcon par rupteurs (type Isokorb)', 'qte': round(k['fronts_A2']), 'unite': 'ml', 'pu': 250, 'fiab': 'hypothese',
          'note': 'L\'ITE laisse les balcons en pont thermique ; ordre de grandeur'},
+        {'poste': 'Local technique en toiture pour la centrale double flux, si retenu', 'qte': 25, 'unite': 'm²', 'pu': 1500, 'fiab': 'hypothese',
+         'note': 'Non obligatoire pour une centrale collective extérieure ; surface et prix à confirmer (fiche du fabricant, gros œuvre, étanchéité, isolation)'},
         {'poste': 'Lever l\'option compteurs d\'énergie de la tour A1 (instrumentation du jumeau)', 'qte': k['n1'], 'unite': 'logement', 'pu': 250, 'fiab': 'hypothese',
          'note': 'Concerne A1 : sans comptage individuel, pas de suivi par logement'},
     ]
@@ -421,8 +425,8 @@ def exploitation(k):
         {'id': 'bc', 'poste': 'Béton bas carbone', 'chaleur': 0, 'elec': 0, 'note': 'Agit sur le carbone de construction'},
     ]
     maint = [
-        {'id': 'vent', 'poste': 'Ventilation : visites, courroies, filtres', 'A1': 900, 'A2': 3600, 'fiab': 'hypothese',
-         'note': 'A1 : 3 caissons simple flux (300 €/an chacun). A2 : 3 CTA double flux, filtres changés 2 fois par an (1 200 €/an chacune)'},
+        {'id': 'vent', 'poste': 'Ventilation : visites, courroies, filtres', 'A1': 900, 'A2': 2000, 'fiab': 'hypothese',
+         'note': 'A1 : 3 caissons simple flux (300 €/an chacun). A2 : une centrale double flux, filtres changés 2 fois par an et visite (au lieu de 3 × 1 200 €/an avec trois CTA)'},
         {'id': 'sol', 'poste': 'Eau chaude solaire : contrat d\'entretien', 'A1': 0, 'A2': 540, 'fiab': 'hypothese', 'note': '1,5 % de l\'investissement par an'},
         {'id': 'toit', 'poste': 'Toiture : entretien', 'A1': round(k['roof_A1'] * 0.5), 'A2': round(k['tv_A2'] * 1.5), 'fiab': 'hypothese',
          'note': 'Gravillons 0,5 €/m².an ; végétalisation extensive 1,5 €/m².an (1 passage)'},
@@ -431,7 +435,7 @@ def exploitation(k):
         {'poste': 'Béton bas carbone (fondations A2)', 'valeur': round(-k['bc_A2'] * 219 * 0.30 / 1000, 1), 'unite': 'tCO₂e', 'fiab': 'hypothese',
          'note': f"{k['bc_A2']:.0f} m³ × 219 kgCO₂e/m³ (béton de référence C25/30) × −30 % ; à remplacer par la FDES du fournisseur"},
         {'poste': 'ITE PSE 140 mm et enduit, moins le doublage intérieur', 'valeur': None, 'unite': 'tCO₂e', 'fiab': 'hypothese', 'note': 'À chiffrer avec les FDES INIES (bilan proche de zéro attendu : un isolant remplace l\'autre)'},
-        {'poste': 'CTA double flux et réseaux de soufflage', 'valeur': None, 'unite': 'tCO₂e', 'fiab': 'hypothese', 'note': 'À chiffrer (PEP ecopassport) : impact en hausse'},
+        {'poste': 'Centrale double flux et réseaux de soufflage', 'valeur': None, 'unite': 'tCO₂e', 'fiab': 'hypothese', 'note': 'À chiffrer (PEP ecopassport) : impact en hausse'},
         {'poste': 'Capteurs solaires et ballon', 'valeur': None, 'unite': 'tCO₂e', 'fiab': 'hypothese', 'note': 'À chiffrer (PEP ecopassport) : impact en hausse'},
         {'poste': 'Végétalisation de toiture', 'valeur': None, 'unite': 'tCO₂e', 'fiab': 'hypothese', 'note': 'À chiffrer : impact faible'},
     ]
@@ -460,15 +464,19 @@ def defaults(C, E):
 def attention(k, D):
     return [
         {'niveau': 'fort', 'titre': 'Gain d\'exploitation faible avec un réseau de chaleur bon marché et bas carbone',
-         'texte': f"La variante économise ≈ {D['gain_energie']:,} € TTC d'énergie par an pour un surcoût de travaux estimé à {D['delta']:,} € HT. Avec l'entretien supplémentaire (≈ {D['delta_maintenance']:,} €/an, hypothèses), le bilan annuel est négatif. Elle se justifie par la RE2020, le confort et la qualité de l'air, pas par le coût d'usage.".replace(',', ' ')},
+         'texte': (f"La variante économise ≈ {D['gain_energie']:,} € TTC d'énergie par an pour un surcoût de travaux estimé à {D['delta']:,} € HT. Avec l'entretien supplémentaire (≈ {D['delta_maintenance']:,} €/an, hypothèses), le bilan annuel est de {D['gain_net']:+,} €, ".replace(',', ' ')
+                   + ('proche de zéro : les travaux ne sont pas remboursés par l\'usage.' if abs(D['gain_net']) < 500 else ('négatif.' if D['gain_net'] < 0 else 'positif mais sans commune mesure avec le surcoût.'))
+                   + " Elle se justifie par la RE2020, le confort et la qualité de l'air, pas par le coût d'usage.")},
         {'niveau': 'fort', 'titre': 'La double flux consomme plus d\'électricité qu\'elle ne fait économiser de chaleur',
-         'texte': 'Les ventilateurs des trois CTA doublent la consommation de ventilation (≈ 8,6 contre 3,9 kWh/m².an). Au prix et au contenu CO₂ de la chaleur du réseau, le poste double flux est déficitaire en euros et en CO₂. Piste : garder l\'ITE et revenir à une hygro B, ou exiger des CTA à ventilateurs basse consommation et un réglage des débits.'},
+         'texte': 'Les ventilateurs de la double flux doublent la consommation de ventilation (≈ 8,6 contre 3,9 kWh/m².an, simulation à trois CTA). Au prix et au contenu CO₂ de la chaleur du réseau, le poste double flux reste déficitaire en euros et en CO₂. À exiger pour la centrale unique : ventilateurs basse consommation (puissance spécifique faible) et réglage des débits à la mise en service.'},
+        {'niveau': 'moyen', 'titre': 'Centrale double flux unique en toiture : conditions',
+         'texte': 'Une panne ou un entretien arrête la ventilation de toute la tour : centrale à deux ventilateurs (secours). Charge concentrée sur la dalle haute R+9 (de l\'ordre de 1,5 à 2 t, à vérifier par le BET structure). Caisson extérieur double peau avec protection antigel de l\'échangeur, réseau en toiture isolé (50 mm de laine minérale au moins), condensats protégés du gel. La maquette contient encore trois CTA : à remplacer par la centrale unique et son réseau en anneau.'},
         {'niveau': 'moyen', 'titre': 'Rupteurs et balcons avec l\'ITE',
          'texte': f"L'ITE rend les rupteurs de nez de plancher du CCTP 301 redondants (≈ {k['rupt_A2']:.0f} ml) mais laisse ≈ {k['fronts_A2']:.0f} ml de liaisons de balcon en pont thermique. À arbitrer avec le BET thermique avant de figer la variante."},
         {'niveau': 'moyen', 'titre': 'Comptage individuel en option sur la tour A1',
          'texte': 'Le CCTP met les compteurs d\'énergie chauffage et ECS de la tour COGEDIM en option. Sans eux, le jumeau énergétique ne peut pas suivre A1 logement par logement.'},
         {'niveau': 'moyen', 'titre': 'Gaines et toiture à recoordonner',
-         'texte': 'La double flux ajoute un réseau de soufflage dans les gaines techniques (déjà « à optimiser » sur les plans CVC) et trois CTA, des capteurs et des cheminements sur une toiture végétalisée : zones stériles et accès d\'entretien à prévoir.'},
+         'texte': 'La double flux ajoute un réseau de soufflage dans les gaines techniques (déjà « à optimiser » sur les plans CVC) et une centrale avec son réseau en anneau, des capteurs et des cheminements sur une toiture végétalisée : zones stériles et accès d\'entretien à prévoir.'},
         {'niveau': 'info', 'titre': 'Surface habitable gagnée',
          'texte': 'Supprimer le doublage intérieur libère ≈ 11 cm le long des façades, soit de l\'ordre de 80 m² de surface habitable sur la tour A2. Non intégré au chiffrage.'},
         {'niveau': 'info', 'titre': 'Budget du dossier réparti à 50/50',
@@ -828,7 +836,7 @@ def build_xlsx(data, path):
         ('Surcoût par m² habitable A2', f"={COUT['delta']}/{E['tours']['A2']['shab']}", '€ HT/m²', ''),
         ('Gain d\'énergie annuel de la variante', f"={EXP['gain']}", '€ TTC/an', 'Méthode du jumeau'),
         ('Entretien supplémentaire', f"={EXP['maint']}", '€ HT/an', 'Hypothèses'),
-        ('Bilan annuel (énergie − entretien)', f"={EXP['bilan']}", '€/an', 'Négatif : la variante coûte plus cher à exploiter'),
+        ('Bilan annuel (énergie − entretien)', f"={EXP['bilan']}", '€/an', 'Énergie économisée moins entretien supplémentaire'),
         ('CO₂ évité en exploitation', f"={EXP['co2']}/1000", 'tCO₂e/an', 'Chaleur du réseau à 0,034 kgCO₂e/kWh'),
         (f"Bilan cumulé sur {E['duree']} ans, surcoût déduit", f"={EXP['cum']}", '€', ''),
     ]
