@@ -10,6 +10,7 @@ Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 Transition numérique. L
 - Suivi de chantier (statuts, réserves, photos, historique) : Supabase, schéma dans `supabase/schema.sql`
 - QR codes et étiquettes : `qr/`
 - Jumeau énergétique : `energie/` (consommations de chaque logement en 3D, alertes, tour A1 DCE contre tour A2 variante RE2020, coût global) ; données dans `data/energie/` (générateur : `tools/build_energie.py`) ; volet « Énergie » ajouté à chaque fiche d'ouvrage
+- Comparatif général A1 / A2 : `comparatif/` (solutions lot par lot, quantités maquette + CCTP non modélisé, coûts par ratios, exploitation et carbone ; classeur Excel et PDF dans `comparatif/docs/`, générateur : `tools/build_comparatif.py`)
 - Audit de la maquette : [`docs/AUDIT_OUVRAGES.md`](docs/AUDIT_OUVRAGES.md)
 - Mise à jour et maintenance : [`docs/MAINTENANCE.md`](docs/MAINTENANCE.md)
 

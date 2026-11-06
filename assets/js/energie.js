@@ -602,8 +602,30 @@ function renderDetail() {
         el('dt', { text: 'Ventilation' }), el('dd', { text: l.tour === 'A1' ? 'VMC simple flux hygroréglable B' : 'Double flux (variante A2)' }),
         el('dt', { text: 'Plan' }), el('dd', { text: `${l.plan} (tableau des surfaces ind. A)` })),
       el('div', { class: 'tagline' }, el('span', { class: 'tag tag-real', text: 'Typologie, surface, position : DCE et maquette' }), el('span', { class: 'tag tag-fic', text: 'Consommations simulées' }))),
+    equipementsBlock(l),
     ouvragesBlock(l),
   ].filter(Boolean));
+}
+// équipements prévus au CCTP (non modélisés), dénombrés d'après les plans CVC des logements types
+const TYPO_EQ = { T2: { pp: 2, eau: 1, bouches: 3 }, T3A: { pp: 3, eau: 1, bouches: 3 }, T3B: { pp: 3, eau: 1, bouches: 4 }, T4: { pp: 4, eau: 2, bouches: 5 } };
+function equipementsBlock(l) {
+  const t = TYPO_EQ[l.typo];
+  if (!t) return null;
+  const a1 = l.tour === 'A1';
+  const items = [
+    ['1', 'module thermique d\'appartement Uponor Combi Port'],
+    ['1', 'thermostat d\'ambiance programmable'],
+    [String(a1 ? t.pp + t.eau : t.pp), 'radiateur(s) acier HM Classic Easy M'],
+    a1 ? null : [String(t.eau), 'sèche-serviettes eau chaude Atlantic Corsaire'],
+    a1 ? [String(t.pp), 'entrée(s) d\'air hygroréglable(s) EH 5/45'] : [String(t.pp), 'bouche(s) de soufflage double flux'],
+    [String(t.bouches), a1 ? 'bouche(s) d\'extraction hygroréglable(s)' : 'bouche(s) d\'extraction double flux'],
+    ['1', a1 ? 'compteur d\'énergie chauffage + ECS (en option au CCTP)' : 'compteur d\'énergie chauffage + ECS (en base)'],
+  ].filter(Boolean);
+  const ul = el('ul', { class: 'eq-list' });
+  for (const [n, txt] of items) ul.append(el('li', {}, el('b', { text: n }), el('span', { text: txt })));
+  return el('div', { class: 'dt-section' }, el('h3', { text: 'Équipements du logement' }), ul,
+    el('p', { class: 'dt-note' }, a1 ? 'Prévus au CCTP 502-503-504, non modélisés : comptés d\'après les plans CVC des logements types. ' : 'CCTP 502-503-504 et variante A2 ; dénombrement d\'après les plans CVC des logements types. ',
+      el('a', { href: '../comparatif/#quantites', text: 'Voir le comparatif A1 / A2' })));
 }
 function ouvragesBlock(l) {
   if (!l.ouvrages.length) return null;
@@ -753,8 +775,8 @@ function renderCoutGlobal() {
       field('evol_eau', 0.1, 'Évolution de l\'eau, %/an', 'À ajuster', true),
       field('co2_elec', 0.001, 'CO₂ de l\'électricité, kg/kWh', 'Ordre de grandeur, à vérifier', true),
       el('h3', { text: 'Variante A2' }),
-      el('label', {}, el('span', {}, 'Surcoût de la variante, € TTC', el('small', { text: 'Issu de votre chiffrage (vide = non calculé)' })),
-        el('input', { type: 'number', step: 1000, placeholder: 'ex. 450 000', 'data-k': 'surcout', oninput: (e) => { S.surcout = parseFloat(e.target.value) || 0; renderCoutGlobal(); } })));
+      el('label', {}, el('span', {}, 'Surcoût de la variante, € HT', el('small', {}, 'Estimé par ratios dans le ', el('a', { href: '../comparatif/#couts', text: 'comparatif A1 / A2' }))),
+        el('input', { type: 'number', step: 1000, placeholder: 'ex. 450 000', 'data-k': 'surcout', value: S.surcout || null, oninput: (e) => { S.surcout = parseFloat(e.target.value) || 0; renderCoutGlobal(); } })));
   }
   const H = S.hyp, YEARS = 50, J = S.J;
   const last = S.ND - 1;
@@ -813,6 +835,13 @@ async function main() {
   const get = (p) => fetch(p, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(p); return r.json(); });
   const [J, LG, SE, OU] = await Promise.all([get('../data/energie/jumeau.json'), get('../data/energie/logements.json'), get('../data/energie/series.json'), get('../data/energie/ouvrages.json')]);
   prepare(J, LG, SE, OU);
+  // surcoût de la variante : repris du comparatif général (estimation par ratios), modifiable
+  fetch('../data/comparatif/comparatif.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(C => {
+    if (!C || S.surcout) return;
+    S.surcout = C.defauts.delta;
+    const inp = document.querySelector('[data-k="surcout"]');
+    if (inp) { inp.value = S.surcout; renderCoutGlobal(); }
+  }).catch(() => {});
   bind('period-label').textContent = `${fmtDay(0)} → ${fmtDay(S.ND - 1)}`;
   renderStory();
   let rsT = 0; let lastW = window.innerWidth;

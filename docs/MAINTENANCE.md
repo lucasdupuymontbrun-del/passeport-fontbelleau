@@ -199,3 +199,19 @@ Page de nuit qui montre, logement par logement, les consommations de la premièr
 Régénérer : `python tools/build_energie.py` (aucune dépendance). Pour passer aux vraies données, remplacer la fonction `simulate()` par la lecture des exports de télé-relève (un fichier par compteur, un relevé par jour) en gardant le même format de sortie ; les règles de détection s'appliquent telles quelles.
 
 Hypothèses à confirmer par l'étude énergétique : gains de la variante A2, rendement solaire (30 %), rendement de récupération des CTA (82 %), consommation des ventilateurs, évolution des prix. Elles sont modifiables dans la page (bloc « Coût global ») et dans l'en-tête du générateur.
+
+## Comparatif général A1 / A2 (`comparatif/`)
+
+Page : `comparatif/index.html` (+ `assets/js/comparatif.js`, `assets/css/comparatif.css`). Elle lit `data/comparatif/comparatif.json` et propose deux documents à télécharger dans `comparatif/docs/` : un classeur Excel avec formules et un PDF de synthèse.
+
+Tout est produit par un seul script, à relancer après une modification de la maquette, du jumeau ou d'un ratio :
+
+```
+python3 tools/build_comparatif.py
+```
+
+- **Quantités** : maquette (surfaces, volumes, nombres d'éléments), géométrie (façade, rupteurs, balcons), CCTP pour les équipements non modélisés de la tour A1 (« CCTP, non modélisé »), dénombrement par typologie d'après les plans CVC des logements types (`TYPO` dans le script).
+- **Coûts** : budget objectif du dossier (`BUDGET_2020`) actualisé par l'index BT01 (`BT01`), écarts de la variante dans `couts()` (quantité × prix unitaire, source ou « hypothèse »). Les prix unitaires se modifient aussi sur la page et dans le classeur (cellules jaunes).
+- **Exploitation et carbone** : repris de `data/energie/jumeau.json` (année 1 simulée), entretien dans `exploitation()`.
+- Le classeur sort sans valeurs calculées : l'ouvrir et l'enregistrer dans Excel, ou le recalculer avec LibreOffice, avant de le diffuser hors du site.
+- Le jumeau énergétique reprend le surcoût total du comparatif comme valeur par défaut du « coût global ».
