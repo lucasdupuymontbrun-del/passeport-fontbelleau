@@ -183,8 +183,9 @@ export async function createTwin(container, opts) {
   setStatus('Allumage des logements');
 
   const N = logements.length;
+  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
@@ -301,6 +302,11 @@ export async function createTwin(container, opts) {
   controls.enableDamping = true; controls.dampingFactor = 0.07;
   controls.minDistance = 12; controls.maxDistance = 420; controls.maxPolarAngle = Math.PI * 0.495;
   controls.autoRotateSpeed = 0.35;
+  if (coarse) {
+    // sur téléphone : un doigt vertical fait défiler la page, un doigt horizontal fait tourner, deux doigts zooment
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE };
+    renderer.domElement.style.touchAction = 'pan-y';
+  }
   const mid = new THREE.Vector3((c1[0] + c2[0]) / 2, 14, (c1[2] + c2[2]) / 2);
   const towerC = { A1: new THREE.Vector3(c1[0], 15, c1[2]), A2: new THREE.Vector3(c2[0], 15, c2[2]) };
   const VIEWS = {
@@ -329,14 +335,17 @@ export async function createTwin(container, opts) {
     const w = Math.max(1, container.clientWidth), h = Math.max(1, container.clientHeight);
     renderer.setSize(w, h, false);
     composer.setSize(w, h);
-    bloom.setSize(w / 2, h / 2);
+    bloom.setSize(w / (coarse ? 3 : 2), h / (coarse ? 3 : 2));
     camera.aspect = w / h;
     const shift = (inset.l - inset.r) / 2;
     if (shift) camera.setViewOffset(w, h, -shift, 0, w, h); else camera.clearViewOffset();
     camera.updateProjectionMatrix();
   }
-  new ResizeObserver(resize).observe(container);
+  let lastSize = '';
+  new ResizeObserver(() => { const k = `${container.clientWidth}x${container.clientHeight}`; if (k !== lastSize) { lastSize = k; resize(); } }).observe(container);
   resize();
+  let onScreen = true;
+  new IntersectionObserver((e) => { onScreen = e[0].isIntersecting; }, { threshold: 0.02 }).observe(container);
 
   // ---------- état
   const state = { floor: 0, tower: 'ALL', plan: false, sel: -1, hover: -1, idle: 0, lastInteract: performance.now() };
@@ -446,6 +455,8 @@ export async function createTwin(container, opts) {
     return { x: (v3.x * 0.5 + 0.5) * r.clientWidth, y: (-v3.y * 0.5 + 0.5) * r.clientHeight, hidden: behind };
   }
   function loop() {
+    requestAnimationFrame(loop);
+    if (!first && (!onScreen || document.hidden)) return;
     const t = clock.getElapsedTime();
     secMat.uniforms.uTime.value = t;
     if (tween) {
@@ -459,7 +470,6 @@ export async function createTwin(container, opts) {
     composer.render();
     onFrame?.(project);
     if (first) { first = false; setStatus(''); onReady?.(); }
-    requestAnimationFrame(loop);
   }
   // entrée en scène
   flyTo(VIEWS.ALL.p, VIEWS.ALL.t, reduceMotion() ? 0 : 2600);
@@ -467,7 +477,7 @@ export async function createTwin(container, opts) {
 
   return {
     setColors(arr) { texData.set(arr); tex.needsUpdate = true; },
-    setInsets(l, r) { inset.l = l; inset.r = r; resize(); },
+    setInsets(l, r) { if (l === inset.l && r === inset.r) return; inset.l = l; inset.r = r; resize(); },
     setFloor(n, fly = true) { state.floor = n; applyCut(); if (fly) frame(); interacted(); },
     setTower(z) { state.tower = z; frame(); interacted(); },
     setPlan(on) { state.plan = on; controls.autoRotate = false; frame(); interacted(); },

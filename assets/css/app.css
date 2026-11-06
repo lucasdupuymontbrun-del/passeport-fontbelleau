@@ -192,6 +192,7 @@ a { color: inherit; }
 }
 @media (min-width: 1000px) { .viewer { height: auto; min-height: 640px; } }
 .viewer-canvas { position: absolute; inset: 0; touch-action: none; }
+@media (pointer: coarse) { .viewer-canvas { touch-action: pan-y; } }
 .viewer-canvas canvas { width: 100% !important; height: 100% !important; display: block; cursor: grab; }
 .viewer-canvas canvas:active { cursor: grabbing; }
 .viewer-status {

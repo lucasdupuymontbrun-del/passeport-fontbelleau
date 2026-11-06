@@ -52,7 +52,8 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; }
+@media (pointer: fine) { html { scroll-behavior: smooth; } }
 body {
   margin: 0; font-family: var(--font); font-size: 15px; line-height: 1.5; color: var(--encre);
   background: var(--nuit); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
@@ -417,7 +418,16 @@ a { color: inherit; }
 }
 @media (max-width: 900px) {
   .hide-s { display: none; }
-  .topbar { position: sticky; background: rgba(8, 11, 14, .92); backdrop-filter: blur(10px); height: 54px; padding: 0 12px; }
+  .topbar { position: sticky; background: #0a0e12; height: 54px; padding: 0 12px; }
+  /* pas de flou d'arrière-plan sur téléphone : il ralentit le défilement au-dessus de la 3D */
+  .floors button, .stage-tools button, .legend-ramp, .btn, .pin-head, .plabel { backdrop-filter: none; }
+  .stage-canvas canvas { touch-action: pan-y; }
+  .touch-hint {
+    position: absolute; z-index: 7; left: 50%; bottom: 52px; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+    font-size: 12px; color: var(--encre-2); background: rgba(10, 14, 18, .8); border: 1px solid var(--trait); padding: 5px 10px; border-radius: 99px;
+    transition: opacity .4s;
+  }
+  .touch-hint.is-gone { opacity: 0; }
   .flag { display: none; }
   .brand-logo { height: 20px; }
   .top-links .btn { padding: 0 11px; min-height: 36px; }
@@ -433,9 +443,10 @@ a { color: inherit; }
   .timeline { position: relative; left: auto; right: auto; bottom: auto; margin: 10px 12px 0; height: auto; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto; }
   .tl-play { width: 44px; height: 44px; }
   .tl-modes { flex-direction: row; justify-self: start; }
-  .tl-chart { grid-column: 1 / -1; height: 84px; }
-  .panel { position: relative; top: auto; bottom: auto; left: auto; right: auto; width: auto; margin: 12px; backdrop-filter: none; background: var(--surface); }
-  .panel-right { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; top: auto; margin: 0; max-height: 72svh; border-radius: 18px 18px 0 0; background: var(--verre-fort); backdrop-filter: blur(16px); }
+  .tl-chart { grid-column: 1 / -1; height: 84px; touch-action: pan-y; }
+  /* les panneaux suivent la page : ni défilement interne ni blocage du défilement (cause du bug au doigt) */
+  .panel { position: relative; top: auto; bottom: auto; left: auto; right: auto; width: auto; margin: 12px; backdrop-filter: none; background: var(--surface); overflow: visible; overscroll-behavior: auto; }
+  .panel-right { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; top: auto; margin: 0; max-height: 72svh; border-radius: 18px 18px 0 0; background: #141b21; overflow: auto; overscroll-behavior: contain; }
   .has-detail .floors, .has-detail .legend-ramp, .has-detail .stage-tools { right: auto; }
   .has-detail .floors { right: 10px; }
   .cmp-grid, .cg-grid, .met-grid { grid-template-columns: 1fr; }
@@ -445,3 +456,5 @@ a { color: inherit; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (forced-colors: active) { .pin-dot, .tag-fic { forced-color-adjust: none; } }
+
+@media (min-width: 901px) { .touch-hint { display: none; } }

@@ -122,7 +122,7 @@ export async function createViewer(container, opts = {}) {
   setStatus('Construction du modèle');
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia?.('(pointer: coarse)').matches ? 1.5 : 2));
   renderer.localClippingEnabled = true;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   ui.canvasHost.appendChild(renderer.domElement);
@@ -263,6 +263,11 @@ export async function createViewer(container, opts = {}) {
   controls.maxPolarAngle = Math.PI * 0.495;
   controls.minDistance = 1.5;
   controls.maxDistance = 600;
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    // téléphone : un doigt vertical fait défiler la page, horizontal fait tourner, deux doigts zooment
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE };
+    renderer.domElement.style.touchAction = 'pan-y';
+  }
 
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   const sc = siteBox.getCenter(new THREE.Vector3());

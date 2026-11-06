@@ -838,6 +838,8 @@ async function main() {
 
   updateInsets();
   window.addEventListener('resize', updateInsets);
+  const hint = $('[data-v="hint"]');
+  if (hint) { const gone = () => hint.classList.add('is-gone'); $('#stage').addEventListener('pointerdown', gone, { once: true }); setTimeout(gone, 7000); }
   // contrôles
   $$('[data-usage]').forEach(b => b.addEventListener('click', () => setUsage(b.dataset.usage)));
   $$('[data-color]').forEach(b => b.addEventListener('click', () => { S.color = b.dataset.color; $$('[data-color]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); paint(); if (S.sel) renderDetail(); }));
