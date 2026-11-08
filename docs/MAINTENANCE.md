@@ -128,6 +128,11 @@ python tools/build_passeports.py <chemin>/ouvrages.json <chemin>/export3d
 ```
 
 3. Lire `docs/AUDIT_OUVRAGES.md` (identifiants en double, éléments sans identifiant, incohérences), puis publier `data/`, `model/`, `plans/` et `docs/`.
+4. Mettre à jour le jumeau énergétique et le comparatif (voir la dernière section).
+
+Équipements de génie climatique : seuls les extracteurs de la ventilation hybride de la tour A2 (famille « VAR A2 - Extracteur hybride stato-mécanique », identifiants `VHY-EXT-A` à `VHY-EXT-I`) ont une fiche ; le passeport leur ajoute le préfixe `A2`. Les colonnes de ventilation (gaines du sous-projet « A2 - Lot 502 CVC ») sont visibles en 3D (groupe `a2_vmc`) sans fiche, une colonne étant faite de plusieurs tronçons.
+
+Transfert sans accès au dossier : les deux scripts écrivent aussi une version compressée (`*.b64`) qu'on peut relire par morceaux avec le pont Python quand le dossier `Documents\Passeport_Fontbelleau\` n'est pas accessible directement.
 
 La référence d'une fiche dérive de l'identifiant de la maquette (`A2 PM 001` → `A2-PM001`). Les éléments de la tour A1 reçoivent le préfixe `A1`, déduit de leur sous-projet. Un identifiant partagé par plusieurs éléments donne des fiches numérotées (`A2-P201-1`, `A2-P201-2`…) et un avertissement.
 
@@ -185,33 +190,13 @@ Les fiches renvoient vers les pièces du DCE correspondant à leur zone et à le
 | La 3D ne s'affiche pas | Navigateur sans WebGL | Le plan de repérage reste disponible dans « Localisation » |
 
 
-## Jumeau énergétique (`energie/`)
+## Jumeau énergétique et comparatif A1 / A2 : site séparé
 
-Page de nuit qui montre, logement par logement, les consommations de la première année d'exploitation (1er octobre 2027 → 30 septembre 2028), les alertes, la comparaison tour A1 (conception DCE) / tour A2 (variante RE2020 de la maquette) et le coût global sur 50 ans.
+Le jumeau énergétique et le comparatif des tours A1 et A2 ont leur propre site : dépôt `jumeau-fontbelleau`, en ligne sur https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/. Son guide de maintenance est dans ce dépôt (`docs/MAINTENANCE.md`).
 
-| Partie | Où | D'où ça vient |
-|---|---|---|
-| 129 logements (typologie, SHAB, position) | `data/energie/logements.json` | Voiles séparatifs radiaux de la maquette + tableau des surfaces ind. A. Numérotation : A2 d'après les portes « A2 PO R5-Lx », A1 d'après le logement témoin A1.31 |
-| Séries journalières (chauffage, eau chaude, eau, électricité) | `data/energie/series.json` | **Fictif** : scénario simulé, calé sur des hypothèses (chauffage A1 36 kWh/m², A2 −30 %) |
-| Sous-stations, ventilation, solaire, alertes, hypothèses de prix | `data/energie/jumeau.json` | Prix et CO₂ : sources publiques citées dans le fichier ; anomalies injectées, détection par règles (R1 à R5) |
-| Volet « Énergie » des fiches | `data/energie/ouvrages.json` + `assets/js/energie-fiche.js` | CCTP 301, 309, 402, 417, 502, étude thermique citée, variante A2 de la maquette |
+Ce qui reste ici :
 
-Régénérer : `python tools/build_energie.py` (aucune dépendance). Pour passer aux vraies données, remplacer la fonction `simulate()` par la lecture des exports de télé-relève (un fichier par compteur, un relevé par jour) en gardant le même format de sortie ; les règles de détection s'appliquent telles quelles.
+- les pages `energie/` et `comparatif/` ne font plus que rediriger vers le nouveau site (adresse et paramètres conservés : `energie/?l=A2.36` ouvre le logement A2.36) ;
+- le volet « Énergie » des fiches : `assets/js/energie-fiche.js` lit `data/energie/ouvrages.json` et `data/energie/logements.json`. Ces deux fichiers sont écrits par le générateur du jumeau (`tools/build_energie.py` du dépôt `jumeau-fontbelleau`), qui lit lui-même `model/` et `data/index.json` d'ici.
 
-Hypothèses à confirmer par l'étude énergétique : gains de la variante A2, rendement solaire (30 %), rendement de récupération des CTA (82 %), consommation des ventilateurs, évolution des prix. Elles sont modifiables dans la page (bloc « Coût global ») et dans l'en-tête du générateur.
-
-## Comparatif général A1 / A2 (`comparatif/`)
-
-Page : `comparatif/index.html` (+ `assets/js/comparatif.js`, `assets/css/comparatif.css`). Elle lit `data/comparatif/comparatif.json` et propose deux documents à télécharger dans `comparatif/docs/` : un classeur Excel avec formules et un PDF de synthèse.
-
-Tout est produit par un seul script, à relancer après une modification de la maquette, du jumeau ou d'un ratio :
-
-```
-python3 tools/build_comparatif.py
-```
-
-- **Quantités** : maquette (surfaces, volumes, nombres d'éléments), géométrie (façade, rupteurs, balcons), CCTP pour les équipements non modélisés de la tour A1 (« CCTP, non modélisé »), dénombrement par typologie d'après les plans CVC des logements types (`TYPO` dans le script).
-- **Coûts** : budget objectif du dossier (`BUDGET_2020`) actualisé par l'index BT01 (`BT01`), écarts de la variante dans `couts()` (quantité × prix unitaire, source ou « hypothèse »). Les prix unitaires se modifient aussi sur la page et dans le classeur (cellules jaunes).
-- **Exploitation et carbone** : repris de `data/energie/jumeau.json` (année 1 simulée), entretien dans `exploitation()`.
-- Le classeur sort sans valeurs calculées : l'ouvrir et l'enregistrer dans Excel, ou le recalculer avec LibreOffice, avant de le diffuser hors du site.
-- Le jumeau énergétique reprend le surcoût total du comparatif comme valeur par défaut du « coût global ».
+Ordre de mise à jour après une modification de la maquette : 1) régénérer ce site (§ 6) ; 2) dans le dépôt du jumeau, `python tools/build_energie.py` puis `python tools/build_comparatif.py` ; 3) publier les deux dépôts.

@@ -16,7 +16,7 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/work/export/ouvrages.json'
 G3D = sys.argv[2] if len(sys.argv) > 2 else '/home/claude/work/export3d'
-TODAY = dt.date(2026, 11, 5)
+TODAY = dt.date(2026, 11, 8)
 Z0 = 37.89
 SITE = 'https://lucasdupuymontbrun-del.github.io/passeport-fontbelleau/'
 SPECIAL = {439362: 'A2-PM106'}     # passeport détaillé existant (adresse déjà imprimée)
@@ -147,6 +147,8 @@ def kind_of(e, z):
         return 'porte_int'
     if cat == 'Garde-corps':
         return 'garde_corps'
+    if cat == 'Equipement de génie climatique':
+        return 'cvc'
     if cat == 'Modèles génériques':
         if c in ('EV', 'ET'):
             return 'ecaille'
@@ -216,7 +218,7 @@ for r in recs:
     if toks and toks[0] in ('A1', 'A2'):
         prefix, body = toks[0], toks[1:]
     else:
-        prefix, body = ('A1' if z == 'A1' else None), toks
+        prefix, body = (z if z in ('A1', 'A2') else None), toks
     if body:
         parts = slug_tokens(body)
         slug = '-'.join([prefix] + parts if prefix else parts)
@@ -331,6 +333,10 @@ def designation(r):
         if comm.startswith('Garde-corps BA'):
             return 'Garde-corps béton armé'
         return 'Voile béton armé' + (' de %s cm' % fmt(ep * 100, 0) if ep else '')
+    if e.get('vmc'):
+        v = e['vmc']
+        deb = (' (%s m³/h)' % format(int(round(float(v['debit']))), ',').replace(',', ' ')) if v.get('debit') else ''
+        return 'Extracteur hybride stato-mécanique %s — colonne %s%s' % (t, v.get('colonne') or '?', deb)
     td = e.get('tdesc')
     if td and len(td) <= 80 and ':' not in td:
         return td[0].upper() + td[1:]
@@ -788,7 +794,7 @@ def build_record(r):
     warn = []
     if r.get('prefixed'):
         warn.append({'type': 'modele', 'titre': 'Identifiant sans préfixe de tour dans la maquette',
-                     'texte': 'La maquette repère cet élément « %s ». Le passeport ajoute le préfixe A1, déduit du sous-projet, pour le distinguer de la tour A2.' % e.get('ident')})
+                     'texte': 'La maquette repère cet élément « %s ». Le passeport ajoute le préfixe %s, déduit du sous-projet, pour le distinguer de l\'autre tour.' % (e.get('ident'), z)})
     if r.get('dup'):
         warn.append({'type': 'conflit', 'titre': 'Identifiant partagé par %d éléments' % r['dup'][1],
                      'texte': 'Plusieurs éléments de la maquette portent l\'identifiant « %s ». Ce passeport concerne l\'élément Revit %d (n° %d sur %d). À corriger dans la maquette.' % (e.get('ident'), e['id'], r['dup'][0], r['dup'][1])})
@@ -1077,8 +1083,9 @@ lines += ['', '## Éléments sans identifiant', '']
 for r in recs:
     if not r['e'].get('ident'):
         lines.append('- Revit %d (%s, %s, %s) → %s' % (r['e']['id'], r['e']['cat'], r['e'].get('type'), r['e']['ws'], r['slug']))
-lines += ['', '## Éléments sans préfixe de tour (tour A1)', '',
-          '%d éléments de la tour A1 ont un identifiant sans préfixe ; le passeport ajoute « A1 ».' % sum(1 for r in recs if r.get('prefixed')), '',
+lines += ['', '## Éléments sans préfixe de tour', '',
+          '%d éléments de la tour A1 ont un identifiant sans préfixe ; le passeport ajoute « A1 ».' % sum(1 for r in recs if r.get('prefixed') and r['zone'] == 'A1'),
+          '%d éléments de la tour A2 (extracteurs de la VMC hybride, « VHY-EXT-… ») ont un identifiant sans préfixe ; le passeport ajoute « A2 ».' % sum(1 for r in recs if r.get('prefixed') and r['zone'] == 'A2'), '',
           '## IfcGUID en double', '']
 for g, n in ifc.items():
     if n > 1:

@@ -1,6 +1,6 @@
 # Passeports numériques d'ouvrage — Domaine de Fontbelleau
 
-Maquette 3D du projet et fiche d'identité numérique de chaque ouvrage (3 899 fiches), accessibles par deux QR codes : celui du prémur **A2 PM 106** et celui du **projet**.
+Maquette 3D du projet et fiche d'identité numérique de chaque ouvrage (3 905 fiches), accessibles par deux QR codes : celui du prémur **A2 PM 106** et celui du **projet**.
 
 Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 Transition numérique. Les données fictives sont signalées par des hachures.
 
@@ -9,8 +9,7 @@ Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 Transition numérique. L
 - Données générées depuis la maquette Revit `MQT-FONTBELLEAU-G4` : `data/`, `model/`, `plans/` (générateur : `tools/build_passeports.py`)
 - Suivi de chantier (statuts, réserves, photos, historique) : Supabase, schéma dans `supabase/schema.sql`
 - QR codes et étiquettes : `qr/`
-- Jumeau énergétique : `energie/` (consommations de chaque logement en 3D, alertes, tour A1 DCE contre tour A2 variante RE2020, coût global) ; données dans `data/energie/` (générateur : `tools/build_energie.py`) ; volet « Énergie » ajouté à chaque fiche d'ouvrage
-- Comparatif général A1 / A2 : `comparatif/` (solutions lot par lot, quantités maquette + CCTP non modélisé, coûts par ratios, exploitation et carbone ; classeur Excel et PDF dans `comparatif/docs/`, générateur : `tools/build_comparatif.py`)
+- Jumeau énergétique et comparatif A1 / A2 : **site séparé**, dépôt [`jumeau-fontbelleau`](https://github.com/lucasdupuymontbrun-del/jumeau-fontbelleau), en ligne sur https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/. Les anciennes adresses `energie/` et `comparatif/` redirigent vers lui (l'étiquette QR déjà imprimée reste valable). Ce dépôt garde seulement le volet « Énergie » des fiches (`data/energie/ouvrages.json` et `logements.json`, écrits par le générateur du jumeau)
 - Audit de la maquette : [`docs/AUDIT_OUVRAGES.md`](docs/AUDIT_OUVRAGES.md)
 - Mise à jour et maintenance : [`docs/MAINTENANCE.md`](docs/MAINTENANCE.md)
 
@@ -24,4 +23,4 @@ Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 Transition numérique. L
 
 ## Licences des composants
 
-three.js et ses modules de post-traitement (MIT, `assets/vendor/pp/`), supabase-js (MIT), polices Archivo et Big Shoulders Stencil (SIL Open Font License) : voir `assets/vendor/` et `assets/fonts/`.
+three.js (MIT), supabase-js (MIT), polices Archivo et Big Shoulders Stencil (SIL Open Font License) : voir `assets/vendor/` et `assets/fonts/`.

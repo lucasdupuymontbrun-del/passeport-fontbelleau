@@ -53,7 +53,7 @@ export async function renderEnergieFiche(ref, host) {
       const l = byId.get(id); if (!l) continue;
       const ch = l.an.chauffage / l.shab, ref = l.an.ref_chauffage / l.shab;
       const ec = ref > 0 ? (l.an.chauffage / l.an.ref_chauffage - 1) * 100 : 0;
-      box.append(el('a', { class: 'en-logt', href: `../energie/?l=${encodeURIComponent(id)}` },
+      box.append(el('a', { class: 'en-logt', href: `https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/?l=${encodeURIComponent(id)}` },
         el('span', { class: 'en-id', text: id }),
         el('span', { class: 'en-meta', text: `${l.typo} · ${nf(2).format(l.shab)} m² · R+${l.etage} · façade ${l.orient}` }),
         el('span', { class: 'en-val' }, `Chauffage ${nf(1).format(ch)} kWh/m².an `, el('b', { text: `(${ec > 0 ? '+' : ''}${nf(0).format(ec)} % vs comparables)` })),
@@ -64,5 +64,5 @@ export async function renderEnergieFiche(ref, host) {
   } else {
     host.append(el('p', { class: 'en-note', text: 'Cet ouvrage ne borde aucun logement en particulier (noyau, parties communes ou hors volume chauffé).' }));
   }
-  host.append(el('p', { class: 'en-note' }, 'Ces propriétés alimentent les Pset IFC de l\'ouvrage (ISO 16739) et le ', el('a', { href: '../energie/', text: 'jumeau énergétique' }), ' du projet.'));
+  host.append(el('p', { class: 'en-note' }, 'Ces propriétés alimentent les Pset IFC de l\'ouvrage (ISO 16739) et le ', el('a', { href: 'https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/', text: 'jumeau énergétique' }), ' du projet.'));
 }

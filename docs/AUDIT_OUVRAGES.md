@@ -1,13 +1,13 @@
-# Audit des ouvrages de la maquette (05/11/2026)
+# Audit des ouvrages de la maquette (08/11/2026)
 
-Source : export Revit de MQT-FONTBELLEAU-G4 (3962 éléments lus, 3899 passeports créés).
+Source : export Revit de MQT-FONTBELLEAU-G4 (3968 éléments lus, 3905 passeports créés).
 
 ## Répartition
 
 | Zone | Passeports |
 |---|---|
 | Tour A1 | 1260 |
-| Tour A2 | 1421 |
+| Tour A2 | 1427 |
 | Parking R-1 | 315 |
 | Fondations | 648 |
 | Aménagements extérieurs | 34 |
@@ -115,9 +115,10 @@ Source : export Revit de MQT-FONTBELLEAU-G4 (3962 éléments lus, 3899 passeport
 - Revit 485472 (Murs, INT - Cloison 72/48 (plaque de plâtre), R+9) → A1-SANSID-485472
 - Revit 485590 (Murs, INT - Cloison 72/48 (plaque de plâtre), R+9) → A1-SANSID-485590
 
-## Éléments sans préfixe de tour (tour A1)
+## Éléments sans préfixe de tour
 
 1246 éléments de la tour A1 ont un identifiant sans préfixe ; le passeport ajoute « A1 ».
+9 éléments de la tour A2 (extracteurs de la VMC hybride, « VHY-EXT-… ») ont un identifiant sans préfixe ; le passeport ajoute « A2 ».
 
 ## IfcGUID en double
 
@@ -143,19 +144,10 @@ Source : export Revit de MQT-FONTBELLEAU-G4 (3962 éléments lus, 3899 passeport
 
 ## Éléments sans géométrie 3D exportable
 
-- Revit 290676 (Po 128) : geometry_error
-- Revit 292894 (Po 141.13) : geometry_error
-- Revit 292896 (Po 141.14) : geometry_error
-- Revit 293181 (Po 142.14) : geometry_error
-- Revit 293229 (Po 142.38) : geometry_error
-- Revit 293231 (Po 142.39) : geometry_error
-- Revit 305957 (A1 Po 158) : geometry_error
 - Revit 334240 (A1 ME 001) : no_geometry
 - Revit 334242 (A1 ME 002) : no_geometry
 - Revit 334244 (A1 ME 003) : no_geometry
 - Revit 334246 (A1 ME 004) : no_geometry
-- Revit 360545 (Po 133.2) : geometry_error
-- Revit 439271 (A2 Po 158) : geometry_error
 - Revit 443381 (A2 ME 001) : no_geometry
 - Revit 443383 (A2 ME 002) : no_geometry
 - Revit 443385 (A2 ME 003) : no_geometry

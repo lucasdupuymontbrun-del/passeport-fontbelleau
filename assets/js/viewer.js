@@ -6,7 +6,7 @@ import { OrbitControls } from '../vendor/OrbitControls.js';
 const KIND = {
   floors: { color: 0xa7b2b9, opacity: 1 }, walls: { color: 0x91a3af, opacity: 1 }, frame: { color: 0x7d8e9a, opacity: 1 },
   stairs: { color: 0x8b959c, opacity: 1 }, rail: { color: 0x6d7880, opacity: 1 }, openings: { color: 0xa6c3d5, opacity: 0.55 },
-  generic: { color: 0xb8b0a3, opacity: 1 }
+  generic: { color: 0xb8b0a3, opacity: 1 }, vmc: { color: 0x9aa6ae, opacity: 1 }
 };
 const FIXED = {
   topo: { color: 0xd3d8cc, opacity: 1 }, found: { color: 0xb5babb, opacity: 0.95 }, parking: { color: 0xc5c9c8, opacity: 1 },
@@ -14,7 +14,7 @@ const FIXED = {
 };
 const NOISY_KINDS = ['openings', 'generic', 'rail'];
 const LABELS = { floors: 'Dalle', walls: 'Mur', frame: 'Poutre ou poteau', stairs: 'Escalier', rail: 'Garde-corps', openings: 'Menuiserie',
-  generic: 'Équipement de façade', topo: 'Terrain', found: 'Fondation', parking: 'Parking', ext: 'Aménagement extérieur', lt: 'Logement témoin' };
+  generic: 'Équipement de façade', vmc: 'Colonne de ventilation', topo: 'Terrain', found: 'Fondation', parking: 'Parking', ext: 'Aménagement extérieur', lt: 'Logement témoin' };
 const PINK = new THREE.Color(0xd1126f);
 
 function styleOf(name) {
