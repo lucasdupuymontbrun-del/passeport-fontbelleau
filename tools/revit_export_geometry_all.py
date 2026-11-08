@@ -20,7 +20,7 @@ bic = BuiltInCategory
 cats = [bic.OST_Walls, bic.OST_Floors, bic.OST_StructuralFraming, bic.OST_StructuralColumns, bic.OST_Stairs,
         bic.OST_StairsRailing, bic.OST_Railings, bic.OST_Windows, bic.OST_Doors, bic.OST_CurtainWallPanels,
         bic.OST_CurtainWallMullions, bic.OST_StructuralFoundation, bic.OST_GenericModel, bic.OST_Toposolid,
-        bic.OST_Roofs]
+        bic.OST_Roofs, bic.OST_MechanicalEquipment, bic.OST_DuctCurves]
 lst = List[BuiltInCategory]()
 for c in cats:
     lst.Add(c)
@@ -30,7 +30,9 @@ A1WS = set(['RDC'] + ['R+%d' % i for i in range(1, 10)])
 KIND = {'Murs': 'walls', 'Sols': 'floors', 'Toits': 'floors', 'Ossature': 'frame', 'Poteaux porteurs': 'frame',
         'Escalier': 'stairs', 'Garde-corps': 'rail', 'Fenêtres': 'openings', 'Portes': 'openings',
         'Panneaux de murs-rideaux': 'openings', 'Meneaux de murs-rideaux': 'openings',
-        'Modèles génériques': 'generic', 'Fondations': 'found'}
+        'Modèles génériques': 'generic', 'Fondations': 'found',
+        'Equipement de génie climatique': 'generic', 'Gaines': 'vmc'}
+NOMETA = ('topo', 'a2_vmc')   # colonnes de VMC : visibles en 3D, sans passeport (une colonne = plusieurs tronçons)
 
 
 def group_of(ws, cat):
@@ -87,6 +89,15 @@ for e in FilteredElementCollector(doc).WherePasses(ElementMulticategoryFilter(ls
     except Exception:
         ws = ''
     cat = e.Category.Name if e.Category else ''
+    if e.Category is not None and e.Category.BuiltInCategory in (bic.OST_MechanicalEquipment, bic.OST_DuctCurves):
+        if not ws.startswith('A2 - Lot 502'):
+            continue
+        if e.Category.BuiltInCategory == bic.OST_MechanicalEquipment:
+            t = doc.GetElement(e.GetTypeId())
+            if t is None or not t.FamilyName.startswith('VAR A2 - Extracteur'):
+                continue
+        else:
+            cat = 'Gaines'
     eid = int(e.Id.Value) if hasattr(e.Id, 'Value') else int(e.Id.IntegerValue)
     g = group_of(ws, cat)
     if g is None:
@@ -106,7 +117,7 @@ for e in FilteredElementCollector(doc).WherePasses(ElementMulticategoryFilter(ls
     buf = groups.setdefault(g, array.array('h'))
     start = len(buf) // 9
     buf.extend(tmp)
-    if g != 'topo':
+    if g not in NOMETA:
         meta.setdefault(g, []).append([eid, start, n])
 
 manifest = {'version': 2, 'units': 'cm', 'origin_internal_cm': [CX, CY, 0], 'z0_ngf_m': 37.89, 'groups': [],

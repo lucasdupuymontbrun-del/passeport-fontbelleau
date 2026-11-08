@@ -29,7 +29,10 @@ else:
     bic = BuiltInCategory
     cats = [bic.OST_Walls, bic.OST_Floors, bic.OST_StructuralColumns, bic.OST_StructuralFraming,
             bic.OST_StructuralFoundation, bic.OST_Stairs, bic.OST_Roofs, bic.OST_Doors, bic.OST_Windows,
-            bic.OST_GenericModel, bic.OST_CurtainWallPanels, bic.OST_StairsRailing, bic.OST_Railings]
+            bic.OST_GenericModel, bic.OST_CurtainWallPanels, bic.OST_StairsRailing, bic.OST_Railings,
+            bic.OST_MechanicalEquipment]
+    # Équipements de génie climatique : seuls les extracteurs de la VMC hybride (variante A2, en toiture) ont un passeport.
+    MECH_FAMILLES = ('VAR A2 - Extracteur',)
     lst = List[BuiltInCategory]()
     for c in cats:
         lst.Add(c)
@@ -112,6 +115,10 @@ else:
             r['fam'] = t.FamilyName if t is not None else None
         except Exception:
             r['fam'] = None
+        if e.Category.BuiltInCategory == bic.OST_MechanicalEquipment:
+            if not (r.get('fam') or '').startswith(MECH_FAMILLES):
+                continue
+            r['vmc'] = {'colonne': byname(e, 'Colonne VMC'), 'debit': byname(e, 'Débit DCE (m³/h)')}
         r['comm'] = pstr(e, bp('ALL_MODEL_INSTANCE_COMMENTS'))
         r['mark'] = pstr(e, bp('ALL_MODEL_MARK'))
         if t is not None:
