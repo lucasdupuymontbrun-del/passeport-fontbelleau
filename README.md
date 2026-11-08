@@ -7,6 +7,8 @@ Démonstrateur réalisé pour le projet ESCT MP2-BC1-P3 Transition numérique. L
 - Maquette du projet (QR projet) : `index.html`
 - Fiche d'un ouvrage : `o/?r=<référence>` ; fiche détaillée d'A2 PM 106 : `A2-PM106/`
 - Données générées depuis la maquette Revit `MQT-FONTBELLEAU-G4` : `data/`, `model/`, `plans/` (générateur : `tools/build_passeports.py`)
+- Plans de ferraillage d'exemple (fictifs, aucun calcul de structure) et scénario d'avancement 4D : `tools/build_ferraillage_4d.py`, à lancer après le générateur
+- Mode présentation (visite guidée en 7 étapes) : bouton « Présentation » ou `?presentation`
 - Suivi de chantier (statuts, réserves, photos, historique) : Supabase, schéma dans `supabase/schema.sql`
 - QR codes et étiquettes : `qr/`
 - Jumeau énergétique et comparatif A1 / A2 : **site séparé**, dépôt [`jumeau-fontbelleau`](https://github.com/lucasdupuymontbrun-del/jumeau-fontbelleau), en ligne sur https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/. Les anciennes adresses `energie/` et `comparatif/` redirigent vers lui (l'étiquette QR déjà imprimée reste valable). Ce dépôt garde seulement le volet « Énergie » des fiches (`data/energie/ouvrages.json` et `logements.json`, écrits par le générateur du jumeau)

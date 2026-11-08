@@ -341,6 +341,7 @@ export async function createViewer(container, opts = {}) {
       sectionPlane.constant = secZ;
       if (fly !== null) flyTo('coupe', fly);
     }
+    syncStatus();
     opts.onMode?.(m);
   }
 
@@ -373,7 +374,8 @@ export async function createViewer(container, opts = {}) {
     const r = renderer.domElement.getBoundingClientRect();
     ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    const pickables = [target, ...names.map(n => groups[n]).filter(m => m.visible && m.material.opacity > 0.3 && m.name !== 'topo'), ...(coreGroup.visible ? coreGroup.children : [])].filter(Boolean);
+    const pickables = [target, ...names.map(n => groups[n]).filter(m => m.visible && m.material.opacity > 0.3 && m.name !== 'topo'), ...(coreGroup.visible ? coreGroup.children : []),
+      ...Object.values(statusMeshes).flatMap(o => [o.solid, o.ghost]).filter(m => m && m.visible)].filter(Boolean);
     const hits = ray.intersectObjects(pickables, false).filter(h => h.object.visible);
     // ignore ce qui est au-dessus du plan de coupe
     const hit = hits.find(h => h.object === target || -h.point.y + sectionPlane.constant > 0);
@@ -531,11 +533,91 @@ export async function createViewer(container, opts = {}) {
     }
     return null;
   }
+  // ---- vue « avancement » (4D) : chaque élément prend la couleur de son statut
+  let statusOn = false, currentShow = null;
+  const statusMeshes = {}, statusSig = {}, colorCache = new Map();
+  const solidMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, side: THREE.DoubleSide, clippingPlanes: [buildPlane, sectionPlane],
+    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  const ghostMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide, transparent: true, opacity: 0.13, depthWrite: false,
+    clippingPlanes: [buildPlane, sectionPlane] });
+  function lin(hex) {
+    let c = colorCache.get(hex);
+    if (!c) { const k = new THREE.Color(hex); c = [k.r, k.g, k.b]; colorCache.set(hex, c); }
+    return c;
+  }
+  function colored(src, list, mat) {
+    if (!list.length) return null;
+    const P = src.attributes.position.array, N = src.attributes.normal.array;
+    let tot = 0; for (const [e] of list) tot += e.n * 9;
+    const pos = new Float32Array(tot), nor = new Float32Array(tot), col = new Float32Array(tot);
+    let o = 0, s0 = 0;
+    const els = [];
+    for (const [e, c] of list) {
+      const a = e.s * 9, b = (e.s + e.n) * 9;
+      pos.set(P.subarray(a, b), o); nor.set(N.subarray(a, b), o);
+      for (let k = o; k < o + (b - a); k += 3) { col[k] = c[0]; col[k + 1] = c[1]; col[k + 2] = c[2]; }
+      els.push({ ...e, s: s0 }); s0 += e.n; o += b - a;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.computeBoundingBox();
+    const m = new THREE.Mesh(g, mat);
+    m.userData = { elements: els };
+    scene.add(m);
+    return m;
+  }
+  function shown(n) { return (currentShow || names.filter(x => x !== 'found' && x !== 'lt')).includes(n); }
+  function syncStatus() {
+    if (!statusOn) return;
+    for (const n of names) {
+      if (n === 'topo') continue;
+      groups[n].visible = false;
+      const o = statusMeshes[n];
+      if (o) { if (o.solid) o.solid.visible = shown(n); if (o.ghost) o.ghost.visible = shown(n); }
+    }
+  }
+  // fn(element) -> { hex, m: 'solid' | 'ghost' } ou null (élément sans passeport : fantôme gris)
+  function setStatusView(fn) {
+    if (!fn) {
+      statusOn = false;
+      for (const n of Object.keys(statusMeshes)) {
+        for (const k of ['solid', 'ghost']) { const m = statusMeshes[n][k]; if (m) { scene.remove(m); m.geometry.dispose(); } }
+        delete statusMeshes[n]; delete statusSig[n];
+      }
+      for (const n of names) groups[n].visible = shown(n) || (n === 'topo' && sectionPlane.constant > 300 && !currentShow) || (n === 'topo' && currentShow && currentShow.length > 8 && sectionPlane.constant > 300);
+      return;
+    }
+    if (intro) { intro = null; buildPlane.constant = 400; showTarget(true); }
+    statusOn = true;
+    for (const n of names) {
+      if (n === 'topo') continue;
+      const m = groups[n];
+      const solid = [], ghost = [];
+      let sig = '';
+      for (const e of m.userData.elements) {
+        const r = fn(e);
+        const hex = r ? r.hex : 0xb9bfc2, mode = r ? r.m : 'ghost';
+        sig += (mode === 'solid' ? 'S' : 'G') + hex.toString(36);
+        (mode === 'solid' ? solid : ghost).push([e, lin(hex)]);
+      }
+      if (statusSig[n] === sig && statusMeshes[n]) continue;
+      statusSig[n] = sig;
+      const old = statusMeshes[n];
+      if (old) for (const k of ['solid', 'ghost']) if (old[k]) { scene.remove(old[k]); old[k].geometry.dispose(); }
+      statusMeshes[n] = { solid: colored(m.geometry, solid, solidMat), ghost: colored(m.geometry, ghost, ghostMat) };
+    }
+    syncStatus();
+  }
+
   function setFilter(z, cut) {
     if (intro) { intro = null; buildPlane.constant = 400; }
     const show = z === 'ALL' ? names.filter(n => n !== 'found' && n !== 'lt') : zoneGroups(z, names);
     for (const n of names) { groups[n].visible = show.includes(n) || (n === 'topo' && z === 'ALL' && cut == null); setOpacity(groups[n], groups[n].userData.style.opacity, 0); }
     sectionPlane.constant = cut == null ? 400 : cut;
+    currentShow = show;
+    syncStatus();
     const tower = ['A1', 'A2', 'LT'].includes(z);
     const box = new THREE.Box3();
     for (const n of show) if (groups[n] && (!tower || /_floors$/.test(n))) box.union(groups[n].geometry.boundingBox);
@@ -551,6 +633,7 @@ export async function createViewer(container, opts = {}) {
 
   return {
     select,
+    setStatusView,
     clearSelection: clearSel,
     setFilter,
     setMode: (m) => applyMode(m),

@@ -24,6 +24,8 @@
     <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></symbol>
     <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
     <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></symbol>
   </defs>
 </svg>
@@ -37,6 +39,7 @@
   </a>
   <span class="demo-flag" title="Les données fictives de démonstration sont hachurées.">Démonstrateur</span>
   <div class="account">
+    <button class="btn btn-tour" type="button" data-act="tour"><svg class="ico"><use href="#i-play"/></svg><span>Présentation</span></button>
     <a class="btn btn-quiet btn-energie" href="https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/" title="Site du jumeau énergétique : consommations de chaque logement, alertes, comparatif des tours A1 et A2"><span>Jumeau énergétique</span></a>
     <a class="btn btn-quiet hide-s" href="A2-PM106/"><span>A2 PM 106</span></a>
     <button class="btn btn-quiet" id="btn-qr" type="button"><svg class="ico"><use href="#i-qr"/></svg><span>QR code</span></button>
@@ -59,12 +62,26 @@
         <button type="button" class="chip-btn" data-zone="FOND" aria-pressed="false">Fondations</button>
         <button type="button" class="chip-btn" data-zone="EXT" aria-pressed="false">Extérieurs</button>
       </div>
+      <div class="ex-view" role="group" aria-label="Affichage de la maquette">
+        <button type="button" class="chip-btn" data-view="maquette" aria-pressed="true">Maquette</button>
+        <button type="button" class="chip-btn" data-view="avancement" aria-pressed="false">Avancement 4D</button>
+      </div>
       <label class="ex-storey">Étage
         <select id="ex-storey" disabled>
           <option value="">Tous</option>
         </select>
       </label>
     </div>
+  </div>
+
+  <div class="ex-time" data-bind="time" hidden>
+    <button class="tl-play" type="button" data-act="play" aria-label="Faire avancer le chantier"><svg class="ico"><use href="#i-play"/></svg></button>
+    <div class="ex-range">
+      <input type="range" id="ex-day" min="0" max="1" step="1" value="0" aria-label="Date affichée">
+      <div class="ex-ticks" data-bind="ticks" aria-hidden="true"></div>
+    </div>
+    <div class="ex-date"><strong data-bind="date">—</strong><button class="btn btn-quiet btn-s" type="button" data-act="today">Aujourd'hui</button></div>
+    <ul class="ex-legend" data-bind="legend"></ul>
   </div>
 
   <div class="ex-stage">
@@ -82,6 +99,19 @@
       <p class="viewer-hint" data-bind="hint">Touchez un ouvrage pour afficher son résumé. Faites glisser pour tourner, pincez pour zoomer.</p>
     </div>
 
+    <div class="tour-wrap" data-bind="tour" hidden>
+      <div class="tour" role="dialog" aria-modal="false" aria-labelledby="tour-t">
+        <div class="tour-top"><span class="tour-n" data-bind="tour-n"></span><button class="x" type="button" data-act="tour-close" aria-label="Quitter la présentation"><svg class="ico"><use href="#i-close"/></svg></button></div>
+        <h2 class="tour-t" id="tour-t" data-bind="tour-t"></h2>
+        <p class="tour-p" data-bind="tour-p"></p>
+        <div class="tour-nav">
+          <button class="btn btn-line" type="button" data-act="tour-prev">Précédent</button>
+          <span class="tour-dots" data-bind="tour-dots" aria-hidden="true"></span>
+          <button class="btn btn-ink" type="button" data-act="tour-next">Suivant</button>
+        </div>
+      </div>
+    </div>
+
     <aside class="ex-panel" id="ex-panel" aria-live="polite" hidden>
       <button class="x" type="button" data-close-panel aria-label="Fermer le résumé"><svg class="ico"><use href="#i-close"/></svg></button>
       <p class="plate-context" data-p="context"></p>
@@ -92,12 +122,22 @@
         <span data-p="fiab"></span>
       </div>
       <dl class="ex-facts" data-p="facts"></dl>
+      <button class="btn btn-line ex-rebar" type="button" data-p="rebar" hidden><svg class="ico"><use href="#i-download"/></svg>Plan de ferraillage (exemple fictif)</button>
       <div class="ex-actions">
         <a class="btn btn-ink" data-p="open" href="#"><svg class="ico"><use href="#i-open"/></svg>Ouvrir la fiche complète</a>
         <button class="btn btn-quiet" type="button" data-p="focus"><svg class="ico"><use href="#i-target"/></svg>Centrer</button>
       </div>
     </aside>
   </div>
+  <section class="ex-dash" data-bind="dash" hidden aria-labelledby="dash-t">
+    <div class="ex-dash-head"><h2 id="dash-t">Avancement au <span data-bind="dash-date">—</span></h2><span data-bind="dash-src"></span></div>
+    <div class="ex-dash-grid">
+      <div class="ex-kpi"><span class="ex-kpi-v" data-bind="dash-pct">—</span><span class="ex-kpi-l">des ouvrages posés</span></div>
+      <div class="ex-zbars" data-bind="dash-zones"></div>
+      <div class="ex-phases" data-bind="dash-phases"></div>
+      <div class="ex-week" data-bind="dash-week"></div>
+    </div>
+  </section>
   <p class="ex-note">Géométrie extraite de la maquette Revit MQT-FONTBELLEAU-G4. Les statuts et les dates sans suivi en ligne viennent d'un scénario de démonstration et sont marqués « Fictif ».</p>
 </main>
 

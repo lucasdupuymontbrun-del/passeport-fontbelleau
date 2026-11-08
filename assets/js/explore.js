@@ -1,11 +1,33 @@
 // Maquette du projet : exploration 3D de tous les ouvrages, résumé au toucher, puis fiche complète.
 import * as api from './backend.js';
 import { createViewer } from './viewer.js';
+import { openRebar, closeRebar } from './rebar-ui.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const CFG = window.PASSEPORT_CONFIG || {};
-const S = { rows: [], byId: new Map(), byRef: new Map(), commun: null, live: new Map(), viewer: null, zone: 'ALL', cut: null, current: null };
+const S = { rows: [], byId: new Map(), byRef: new Map(), commun: null, live: new Map(), viewer: null, zone: 'ALL', cut: null, current: null,
+  view: 'maquette', day: 0, today: 0, dmin: 0, dmax: 1, epoch: new Date('2026-01-01T12:00:00'), order: [], fiche: null, playing: false, tour: null, tourI: 0 };
+
+// ---------- 4D : couleurs par statut (vert = posé, orange = sur le chantier, teintes pâles = pas encore sur le chantier)
+const COLORS = {
+  a_commander: { hex: 0x9aa3a8, m: 'ghost' }, commande: { hex: 0x3e6a96, m: 'ghost' }, fabrication: { hex: 0x6a4ba0, m: 'ghost' },
+  pret: { hex: 0x6a4ba0, m: 'ghost' }, livre: { hex: 0xe08a2e, m: 'solid' }, attente_pose: { hex: 0xe08a2e, m: 'solid' },
+  pose_en_cours: { hex: 0xe08a2e, m: 'solid' }, pose: { hex: 0x7cc79a, m: 'solid' }, receptionne: { hex: 0x22764a, m: 'solid' }
+};
+const PHASES = [
+  ['À commander', ['a_commander'], '#9aa3a8'], ['Commandé', ['commande'], '#3e6a96'], ['En usine', ['fabrication', 'pret'], '#6a4ba0'],
+  ['Sur le chantier', ['livre', 'attente_pose', 'pose_en_cours'], '#e08a2e'], ['Posé', ['pose'], '#7cc79a'], ['Réceptionné', ['receptionne'], '#22764a']
+];
+const dayOf = (d) => Math.round((d - S.epoch) / 86400000);
+const dateOf = (n) => new Date(S.epoch.getTime() + n * 86400000);
+function statusAt(row, D) {
+  const l = S.live.get(row.ref);
+  if (l && D >= S.today) return l.statut;
+  let st = 'a_commander', best = -1;
+  (row.dates || []).forEach((d, i) => { if (d != null && d <= D && i > best) { best = i; st = S.order[i]; } });
+  return st;
+}
 
 // Hauteur des planchers bruts (m au-dessus de 37,89 NGF), d'après les niveaux de la maquette (tour A2 ; tour A1 à +5 cm).
 const FLOORS = { RDC: 0, 'R+1': 5.58, 'R+2': 8.37, 'R+3': 11.16, 'R+4': 13.95, 'R+5': 16.74, 'R+6': 19.53, 'R+7': 22.32, 'R+8': 25.11, 'R+9': 27.90, Toiture: 30.67 };
@@ -41,23 +63,24 @@ function fiab(k) {
 async function showPanel(row, el3d) {
   const p = $('#ex-panel');
   S.current = row;
+  const tok = S.panelTok = (S.panelTok || 0) + 1;
   const q = (k) => $(`[data-p="${k}"]`, p);
   if (!row) {
     q('context').textContent = el3d?.kind || 'Élément de la maquette';
     q('reference').textContent = 'Sans passeport';
     q('designation').textContent = "Cet élément n'a pas de passeport : c'est un sous-élément (par exemple un panneau de mur-rideau) ou il n'a pas d'identifiant dans la maquette.";
     q('pill').hidden = true; q('fiab').textContent = ''; q('facts').textContent = '';
-    q('open').hidden = true; q('focus').hidden = true;
+    q('open').hidden = true; q('focus').hidden = true; q('rebar').hidden = true;
     p.hidden = false;
     return;
   }
-  q('pill').hidden = false; q('open').hidden = false; q('focus').hidden = false;
+  q('pill').hidden = false; q('open').hidden = false; q('focus').hidden = false; q('rebar').hidden = true;
   q('context').textContent = `${ZONE_LABEL[row.zone] || ''} · ${row.etage}`;
   q('reference').textContent = row.reference;
   q('designation').textContent = row.designation;
-  const st = statusOf(row);
+  const st = S.view === 'avancement' ? { cle: statusAt(row, S.day), live: Boolean(S.live.get(row.ref)) && S.day >= S.today } : statusOf(row);
   const pill = q('pill');
-  pill.textContent = statusDef(st.cle).label; pill.dataset.status = st.cle; pill.classList.toggle('is-fictif', !st.live);
+  pill.textContent = statusDef(st.cle).label + (S.view === 'avancement' && S.day !== S.today ? ` au ${fmtDate(dateOf(S.day).toISOString())}` : ''); pill.dataset.status = st.cle; pill.classList.toggle('is-fictif', !st.live);
   q('fiab').textContent = '';
   q('fiab').append(st.live ? el('span', { class: 'fiab fiab-saisi', title: 'Statut mis à jour en ligne par un éditeur.' }, 'Suivi en ligne') : fiab('fictif'));
   q('open').href = passportHref(row.ref);
@@ -69,7 +92,9 @@ async function showPanel(row, el3d) {
   p.hidden = false;
   try {
     const d = await (await fetch(`data/o/${encodeURIComponent(row.ref)}.json`)).json();
-    if (S.current !== row) return;
+    if (S.current !== row || S.panelTok !== tok) return;
+    S.fiche = d;
+    if (d.ferraillage) { q('rebar').hidden = false; q('rebar').onclick = () => openRebar(d); }
     const js = (d.planning?.jalons || []).filter(j => !j.reelle && j.previsionnelle).sort((a, b) => a.previsionnelle.localeCompare(b.previsionnelle));
     if (js[0]) add('Prochaine échéance', el('span', {}, `${js[0].label} : ${fmtDate(js[0].previsionnelle)} `, fiab(js[0].fiab || 'fictif')));
     else add('Prochaine échéance', 'Aucune : tous les jalons ont une date réelle.');
@@ -78,7 +103,161 @@ async function showPanel(row, el3d) {
     if (d.avertissements?.length) add('À noter', d.avertissements.map(a => a.titre).join(' · '));
   } catch (e) { /* le résumé reste utilisable sans la fiche */ }
 }
-function hidePanel() { $('#ex-panel').hidden = true; S.current = null; S.viewer?.clearSelection(); }
+function hidePanel() { $('#ex-panel').hidden = true; S.current = null; S.fiche = null; S.viewer?.clearSelection(); }
+
+// ---------- 4D
+let paintRaf = 0;
+function paint() {
+  if (S.view !== 'avancement' || !S.viewer) return;
+  cancelAnimationFrame(paintRaf);
+  paintRaf = requestAnimationFrame(() => {
+    S.viewer.setStatusView((e) => { const r = S.byId.get(e.id); return r ? COLORS[statusAt(r, S.day)] : null; });
+    renderDash();
+    if (S.current) showPanel(S.current);
+  });
+}
+function setView(v) {
+  S.view = v;
+  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  $('[data-bind="time"]').hidden = v !== 'avancement';
+  $('[data-bind="dash"]').hidden = v !== 'avancement';
+  if (v === 'avancement') paint(); else { stop(); S.viewer?.setStatusView(null); if (S.current) showPanel(S.current); }
+}
+function setDay(n) {
+  S.day = Math.max(S.dmin, Math.min(S.dmax, Math.round(n)));
+  $('#ex-day').value = S.day;
+  $('[data-bind="date"]').textContent = fmtDate(dateOf(S.day).toISOString()) + (S.day === S.today ? ' (aujourd\'hui)' : '');
+  paint();
+}
+function play(until) {
+  if (S.playing) { stop(); return; }
+  if (S.day >= S.dmax) setDay(S.dmin);
+  S.playing = true;
+  $('[data-act="play"]').innerHTML = '<svg class="ico"><use href="#i-pause"/></svg>';
+  const end = until ?? S.dmax;
+  let last = performance.now(), acc = S.day;
+  const tick = (now) => {
+    if (!S.playing) return;
+    acc += (now - last) / 1000 * 36; last = now;
+    setDay(Math.min(acc, end));
+    if (acc >= end) { stop(); return; }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function stop() {
+  S.playing = false;
+  const b = $('[data-act="play"]'); if (b) b.innerHTML = '<svg class="ico"><use href="#i-play"/></svg>';
+}
+function renderDash() {
+  const D = S.day, cnt = {}, zone = {}, wk = { livraisons: 0, poses: 0 };
+  const iL = S.order.indexOf('livre'), iP = S.order.indexOf('pose_en_cours');
+  for (const r of S.rows) {
+    const st = statusAt(r, D);
+    cnt[st] = (cnt[st] || 0) + 1;
+    const z = r.zone === 'LT' ? 'A1' : r.zone;
+    zone[z] = zone[z] || [0, 0]; zone[z][1]++;
+    if (st === 'pose' || st === 'receptionne') zone[z][0]++;
+    const dl = r.dates?.[iL], dp = r.dates?.[iP];
+    if (dl != null && dl >= D && dl < D + 7) wk.livraisons++;
+    if (dp != null && dp >= D && dp < D + 7) wk.poses++;
+  }
+  const done = (cnt.pose || 0) + (cnt.receptionne || 0);
+  $('[data-bind="dash-date"]').textContent = fmtDate(dateOf(D).toISOString());
+  $('[data-bind="dash-pct"]').textContent = `${Math.round(done / S.rows.length * 100)} %`;
+  const src = $('[data-bind="dash-src"]'); src.textContent = '';
+  src.append(fiab('fictif'), el('span', { class: 'ex-src', text: S.live.size && D >= S.today ? ` Scénario de démonstration, et ${S.live.size} ouvrage(s) suivi(s) en ligne.` : ' Scénario de démonstration.' }));
+  const zb = $('[data-bind="dash-zones"]'); zb.textContent = '';
+  for (const [z, lab] of [['FOND', 'Fondations'], ['PARK', 'Parking'], ['A1', 'Tour A1'], ['A2', 'Tour A2'], ['EXT', 'Extérieurs']]) {
+    const [a, b] = zone[z] || [0, 0]; const p = b ? Math.round(a / b * 100) : 0;
+    zb.append(el('div', { class: 'ex-zbar' }, el('span', { text: lab }), el('i', {}, el('b', { style: `width:${p}%` })), el('em', { text: `${p} %` })));
+  }
+  const ph = $('[data-bind="dash-phases"]'); ph.textContent = '';
+  for (const [lab, keys, col] of PHASES) {
+    const n = keys.reduce((s2, k) => s2 + (cnt[k] || 0), 0);
+    ph.append(el('div', { class: 'ex-ph' }, el('i', { style: `background:${col}` }), el('span', { text: lab }), el('strong', { text: n.toLocaleString('fr-FR') })));
+  }
+  $('[data-bind="dash-week"]').textContent = `Dans les 7 jours : ${wk.livraisons} livraison${wk.livraisons > 1 ? 's' : ''} et ${wk.poses} mise${wk.poses > 1 ? 's' : ''} en œuvre prévue${wk.poses > 1 ? 's' : ''}.`;
+  const lg = $('[data-bind="legend"]'); lg.textContent = '';
+  for (const [lab, keys, col] of PHASES) lg.append(el('li', {}, el('i', { style: `background:${col}`, class: keys.some(k => COLORS[k].m === 'ghost') ? 'is-ghost' : '' }), lab));
+}
+function setupTime() {
+  let lo = Infinity, hi = -Infinity;
+  for (const r of S.rows) for (const d of r.dates || []) if (d != null) { lo = Math.min(lo, d); hi = Math.max(hi, d); }
+  S.dmin = Math.max(lo - 14, dayOf(new Date('2026-04-01T12:00:00')));
+  S.dmax = Math.min(hi + 14, dayOf(new Date('2027-12-31T12:00:00')));
+  S.today = Math.max(S.dmin, Math.min(S.dmax, dayOf(new Date())));
+  const inp = $('#ex-day'); inp.min = S.dmin; inp.max = S.dmax;
+  const tk = $('[data-bind="ticks"]'); tk.textContent = '';
+  const MO = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  for (let d = new Date(dateOf(S.dmin).getFullYear(), dateOf(S.dmin).getMonth() + 1, 1, 12); dayOf(d) <= S.dmax; d = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12)) {
+    const p = (dayOf(d) - S.dmin) / (S.dmax - S.dmin) * 100;
+    tk.append(el('span', { class: d.getMonth() % 3 ? 'is-minor' : '', style: `left:${p}%`, text: d.getMonth() === 0 ? `${MO[0]} ${d.getFullYear()}` : MO[d.getMonth()] }));
+  }
+  const tp = (S.today - S.dmin) / (S.dmax - S.dmin) * 100;
+  tk.append(el('span', { class: 'is-today', style: `left:${tp}%`, title: "Aujourd'hui" }));
+  inp.addEventListener('input', () => { stop(); setDay(Number(inp.value)); });
+  $('[data-act="play"]').addEventListener('click', () => play());
+  $('[data-act="today"]').addEventListener('click', () => { stop(); setDay(S.today); });
+  S.day = S.today;
+  setDay(S.today);
+}
+
+// ---------- présentation pour l'oral
+function tourSteps() {
+  const pm = S.byRef.get('A2-PM106');
+  const pct = () => { const done = S.rows.filter(r => ['pose', 'receptionne'].includes(statusAt(r, S.today))).length; return Math.round(done / S.rows.length * 100); };
+  const nb = S.rows.length.toLocaleString('fr-FR');
+  const withRebar = S.rows.filter(r => ['premur', 'voile', 'poteau', 'poutre', 'dalle', 'fondation'].includes(r.famille)).length;
+  return [
+    { t: `Une maquette, ${nb} ouvrages`,
+      p: `Toute la maquette Revit du groupe est en ligne : les deux tours, le parking, les fondations et les abords. Chaque élément a sa fiche. Un seul QR code, affiché à l'entrée du chantier, ouvre cette vue sur le téléphone.`,
+      go: () => { closeRebar(); hidePanel(); setView('maquette'); setZone('ALL', { silent: true }); S.viewer?.replay(); } },
+    pm && { t: 'Retrouver un ouvrage en quelques secondes',
+      p: 'On tape sa référence, ou on le touche dans la 3D. La maquette se coupe à son étage, le met en rose et affiche son résumé : statut, prochaine échéance, lot. Ici, le prémur A2 PM 106 du noyau de la tour A2.',
+      go: () => { closeRebar(); setView('maquette'); $('#ex-search').value = 'A2 PM 106'; selectRow(pm); } },
+    pm && { t: 'La fiche de chaque ouvrage',
+      p: "Un bouton ouvre la fiche complète : identité tirée de la maquette, plans du DCE, approvisionnement, planning et suivi de chantier. Chaque information indique sa source et sa fiabilité ; ce qui est inventé pour la démonstration est hachuré « Fictif ».",
+      go: () => { closeRebar(); if (S.current !== pm) selectRow(pm); $('[data-p="open"]').classList.add('is-pulse'); setTimeout(() => $('[data-p="open"]').classList.remove('is-pulse'), 2600); } },
+    pm && { rebar: true, t: 'Du modèle au plan de ferraillage',
+      p: `Pour les ${withRebar.toLocaleString('fr-FR')} ouvrages en béton, le site dessine un plan de ferraillage d'exemple avec les vraies dimensions de la maquette : élévation, coupe, nomenclature, poids d'acier. C'est un exemple fictif, pas un plan d'exécution : aucun calcul de structure n'est fait.`,
+      go: async () => { if (S.current !== pm) selectRow(pm); const d = S.fiche || await (await fetch('data/o/A2-PM106.json')).json(); if (S.tour) openRebar(d, { modal: false }); } },
+    { t: 'Le chantier aujourd\'hui',
+      p: `Chaque ouvrage prend la couleur de son statut. Vert : posé ; orange : sur le chantier ; teintes pâles : commandé, en fabrication ou à commander. Aujourd'hui, ${pct()} % des ouvrages sont posés. Le tableau sous la maquette donne l'avancement par zone et les livraisons de la semaine.`,
+      go: () => { closeRebar(); hidePanel(); setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); setView('avancement'); setDay(S.today); } },
+    { t: 'Le chantier en 4D',
+      p: "Le curseur fait avancer le temps : fondations au printemps 2026, parking l'été, puis les tours étage par étage, au rythme d'un niveau toutes les deux semaines, et le second œuvre derrière. Le planning est un scénario de démonstration, le DCE n'en contient pas.",
+      go: () => { closeRebar(); hidePanel(); setView('avancement'); stop(); setDay(S.dmin); setTimeout(() => { if (S.tour) play(); }, 400); } },
+    pm && { t: 'Le suivi depuis le chantier',
+      p: "Un éditeur connecté change le statut, ajoute une photo ou une réserve depuis son téléphone ; l'historique garde qui a fait quoi et quand. A2 PM 106 est déjà suivi en ligne : son statut vient de la base de données, pas du scénario.",
+      go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
+  ].filter(Boolean);
+}
+function tourShow(i) {
+  const st = S.tour; if (!st) return;
+  S.tourI = Math.max(0, Math.min(st.length - 1, i));
+  const s0 = st[S.tourI];
+  $('[data-bind="tour-n"]').textContent = `Étape ${S.tourI + 1} sur ${st.length}`;
+  $('[data-bind="tour-t"]').textContent = s0.t;
+  $('[data-bind="tour-p"]').textContent = s0.p;
+  const dots = $('[data-bind="tour-dots"]'); dots.textContent = '';
+  st.forEach((_, k) => dots.append(el('i', { class: k === S.tourI ? 'is-on' : '' })));
+  $('[data-act="tour-prev"]').disabled = S.tourI === 0;
+  $('[data-act="tour-next"]').textContent = S.tourI === st.length - 1 ? 'Terminer' : 'Suivant';
+  document.body.classList.toggle('tour-rebar', Boolean(s0.rebar));
+  s0.go();
+}
+function tourStart() {
+  S.tour = tourSteps();
+  $('[data-bind="tour"]').hidden = false; document.body.classList.add('in-tour');
+  $('#viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  tourShow(0);
+}
+function tourEnd() {
+  stop(); closeRebar();
+  $('[data-bind="tour"]').hidden = true; document.body.classList.remove('in-tour');
+  S.tour = null; document.body.classList.remove('tour-rebar');
+}
 
 // ---------- filtres
 function setZone(z, opts = {}) {
@@ -172,6 +351,20 @@ async function main() {
     if (host.requestFullscreen) host.requestFullscreen().catch(() => host.classList.toggle('is-max')); else host.classList.toggle('is-max');
   });
   wireSearch();
+  S.order = ix.statuts_4d || [];
+  if (S.order.length) setupTime(); else $$('[data-view="avancement"]').forEach(b => { b.hidden = true; });
+  $$('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  $('[data-act="tour"]').addEventListener('click', () => (S.tour ? tourEnd() : tourStart()));
+  $('[data-act="tour-close"]').addEventListener('click', tourEnd);
+  $('[data-act="tour-prev"]').addEventListener('click', () => tourShow(S.tourI - 1));
+  $('[data-act="tour-next"]').addEventListener('click', () => { if (S.tourI >= S.tour.length - 1) tourEnd(); else tourShow(S.tourI + 1); });
+  document.addEventListener('keydown', (e) => {
+    if (!S.tour || e.target.matches('input, select, textarea')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); if (S.tourI < S.tour.length - 1) tourShow(S.tourI + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); tourShow(S.tourI - 1); }
+    else if (e.key === 'Escape') tourEnd();
+  });
+  if (new URLSearchParams(location.search).has('presentation')) setTimeout(tourStart, 3400);
 
   const qr = $('#dlg-qr');
   $('[data-bind="qr-url"]', qr).textContent = CFG.siteUrl || location.origin + location.pathname;

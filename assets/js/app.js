@@ -1,6 +1,7 @@
 // Passeport numérique d'ouvrage : rendu de la page à partir de data/o/<REF>.json, data/commun.json et des données de suivi.
 import * as api from './backend.js';
 import { renderEnergieFiche } from './energie-fiche.js';
+import { rebarCard } from './rebar-ui.js';
 
 const REF = (document.body.dataset.ref || new URLSearchParams(location.search).get('r') || '').trim();
 const CFG = window.PASSEPORT_CONFIG || {};
@@ -292,6 +293,7 @@ function renderDocuments() {
   for (const ld of S.live?.documents || []) {
     docs.push({ id: 'live-' + ld.id, categorie: ld.categorie || 'Autres documents', titre: ld.titre, ref: ld.ref_doc, fichier: ld.chemin, acces: 'prive', fiab: 'saisi', note: `Ajouté par ${ld.ajoute_par || 'un éditeur'} le ${fmtDate(ld.cree_le)}`, live: true });
   }
+  if (S.data.ferraillage) host.append(rebarCard(S.data, fiabTag));
   const present = docs.filter(d => d.fiab !== 'nd');
   const missing = docs.filter(d => d.fiab === 'nd');
   const cats = [];
@@ -305,7 +307,7 @@ function renderDocuments() {
   if (missing.length) {
     const g = el('div', { class: 'doc-group is-missing' }, el('h3', { class: 'sub' }, 'Absents du dossier ', fiabTag('nd')));
     const ul = el('ul', { class: 'docs' });
-    for (const d of missing) ul.append(docItem(d, true));
+    for (const d of missing) ul.append(docItem(S.data.ferraillage && d.id === 'nd_ferraillage' ? { ...d, note: "Aucun plan d'exécution dans le DCE. Un exemple fictif est proposé en haut de cette rubrique." } : d, true));
     g.append(ul); host.append(g);
   }
   $$('[data-action="add-doc"]').forEach(b => { b.hidden = S.role !== 'editeur'; });

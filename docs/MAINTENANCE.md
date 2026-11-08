@@ -125,7 +125,10 @@ Les plans du DCE ne doivent pas être déposés dans le dépôt GitHub : il est 
 ```bash
 pip install numpy
 python tools/build_passeports.py <chemin>/ouvrages.json <chemin>/export3d
+python tools/build_ferraillage_4d.py <chemin>/ouvrages.json
 ```
+
+   La seconde commande ajoute aux fiches les plans de ferraillage d'exemple et à `data/index.json` les dates du scénario 4D (voir § 6 ter). Elle doit toujours suivre la première, qui réécrit ces fichiers sans ces données.
 
 3. Lire `docs/AUDIT_OUVRAGES.md` (identifiants en double, éléments sans identifiant, incohérences), puis publier `data/`, `model/`, `plans/` et `docs/`.
 4. Mettre à jour le jumeau énergétique et le comparatif (voir la dernière section).
@@ -135,6 +138,14 @@ python tools/build_passeports.py <chemin>/ouvrages.json <chemin>/export3d
 Transfert sans accès au dossier : les deux scripts écrivent aussi une version compressée (`*.b64`) qu'on peut relire par morceaux avec le pont Python quand le dossier `Documents\Passeport_Fontbelleau\` n'est pas accessible directement.
 
 La référence d'une fiche dérive de l'identifiant de la maquette (`A2 PM 001` → `A2-PM001`). Les éléments de la tour A1 reçoivent le préfixe `A1`, déduit de leur sous-projet. Un identifiant partagé par plusieurs éléments donne des fiches numérotées (`A2-P201-1`, `A2-P201-2`…) et un avertissement.
+
+## 6 ter. Plans de ferraillage fictifs, avancement 4D et mode présentation
+
+**Plans de ferraillage.** `tools/build_ferraillage_4d.py` ajoute un bloc `ferraillage` aux fiches des ouvrages en béton (prémurs, voiles, poteaux, poutres, longrines, pieux, massifs, dalles) : repères, diamètres, espacements, longueurs, poids et ratio, calculés à partir des dimensions de la maquette et de règles forfaitaires (treillis HA8 e = 15 cm pour les prémurs, HA10/HA8 pour les voiles, etc.). Ce sont des **exemples fictifs** : aucun calcul de structure n'a été fait et le DCE ne contient aucun plan d'exécution. Le dessin (élévation ou plan, coupe, nomenclature, cartouche) est produit dans le navigateur par `assets/js/ferraillage.js`, avec le filigrane « EXEMPLE FICTIF » et la mention « Ne pas utiliser pour l'exécution » ; il se télécharge en SVG ou s'imprime en PDF. Les ouvrages trop petits, les dalles sans épaisseur ou les cas dont le ratio sortirait de 20 à 300 kg/m³ n'ont pas d'exemple.
+
+**Avancement 4D.** Sur la page d'accueil, le bouton « Avancement 4D » colore la maquette par statut et affiche un curseur temporel ; « Lecture » fait défiler le chantier. Les dates viennent du scénario fictif par étage (colonne `dates` de `data/index.json`, ajoutée par le même script). Pour une date égale ou postérieure à aujourd'hui, le statut saisi en ligne (Supabase) remplace celui du scénario. Le tableau sous la maquette donne le pourcentage posé, l'avancement par zone et les livraisons de la semaine. Aucun planning TCE n'existe dans le DCE : si un planning réel est fourni, c'est la fonction de dates du script qu'il faudra remplacer.
+
+**Mode présentation.** Le bouton « Présentation » (ou l'adresse `…/?presentation`) lance une visite guidée en 7 étapes : maquette, recherche d'A2 PM 106, fiche, plan de ferraillage, avancement du jour, lecture 4D, suivi depuis le chantier. Flèches du clavier ou Page préc./suiv. pour avancer, Échap pour quitter. Le texte des étapes est dans `tourSteps()` de `assets/js/explore.js`.
 
 ## 6 bis. Lien avec la maquette Revit
 
@@ -199,4 +210,4 @@ Ce qui reste ici :
 - les pages `energie/` et `comparatif/` ne font plus que rediriger vers le nouveau site (adresse et paramètres conservés : `energie/?l=A2.36` ouvre le logement A2.36) ;
 - le volet « Énergie » des fiches : `assets/js/energie-fiche.js` lit `data/energie/ouvrages.json` et `data/energie/logements.json`. Ces deux fichiers sont écrits par le générateur du jumeau (`tools/build_energie.py` du dépôt `jumeau-fontbelleau`), qui lit lui-même `model/` et `data/index.json` d'ici.
 
-Ordre de mise à jour après une modification de la maquette : 1) régénérer ce site (§ 6) ; 2) dans le dépôt du jumeau, `python tools/build_energie.py` puis `python tools/build_comparatif.py` ; 3) publier les deux dépôts.
+Ordre de mise à jour après une modification de la maquette : 1) régénérer ce site (§ 6, y compris `build_ferraillage_4d.py`) ; 2) dans le dépôt du jumeau, `python tools/build_energie.py` puis `python tools/build_comparatif.py` ; 3) publier les deux dépôts.
