@@ -732,3 +732,62 @@ li.empty { padding: 4px 0; }
 @media (min-width: 1000px) { .in-tour.tour-rebar #dlg-rebar[open]:not(:modal) { width: min(820px, calc(100vw - 600px)); margin: 0; left: 24px; right: auto; height: calc(100vh - 96px); }
   .in-tour.tour-rebar .tour-wrap { position: fixed; left: auto; right: 24px; bottom: 24px; width: 520px; } }
 @media (max-width: 700px) { .ex-ticks .is-minor:not(.is-today) { display: none; } }
+
+/* ---------- présentation : objet suivi et lien */
+.tour-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -4px 0 12px; }
+.tour-extra[hidden] { display: none; }
+.tour-obj { margin: 0; font-size: 13.5px; padding: 4px 10px; border-radius: 999px; background: var(--fond, #f1f1ee); border: 1px solid var(--trait); }
+.tour-obj strong { color: var(--traceur); }
+.tour-cta { text-decoration: none; }
+
+/* ---------- plan de ferraillage sur téléphone */
+@media (max-width: 700px) {
+  #dlg-rebar header { gap: 8px; }
+  #dlg-rebar h2 { font-size: 16px; line-height: 1.2; min-width: 0; flex: 1; }
+  #dlg-rebar .pdf-actions { flex-wrap: nowrap; gap: 6px; }
+  #dlg-rebar .pdf-actions .lbl { display: none; }
+  #dlg-rebar .pdf-actions .btn { padding: 0 10px; }
+  #dlg-rebar .rebar-warn { font-size: 12px; line-height: 1.4; }
+}
+
+/* ---------- présentation sur téléphone : plein écran, 3D au-dessus de la carte */
+@media (max-width: 700px), (max-height: 500px) {
+  body.in-tour { overflow: hidden; }
+  .in-tour .topbar, .in-tour .ex-bar, .in-tour .ex-note, .in-tour .ex-dash, .in-tour .ex-panel, .in-tour .site-foot, .in-tour footer { display: none !important; }
+  .in-tour .ex-viewer { position: fixed; z-index: 50; top: 0; left: 0; right: 0; bottom: var(--tour-h, 230px); height: auto; min-height: 0; margin: 0; border: 0; border-radius: 0; }
+  .in-tour .ex-viewer .viewer-tools { bottom: 10px; }
+  .in-tour .ex-time:not([hidden]) { position: fixed; z-index: 55; top: 8px; left: 8px; right: 8px; margin: 0; padding: 8px 10px 6px;
+    background: rgba(255, 255, 255, .93); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+    display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 10px; }
+  .in-tour .ex-time .ex-ticks, .in-tour .ex-time [data-act="today"] { display: none; }
+  .in-tour .ex-time [data-act="play"] { width: 36px; height: 36px; }
+  .in-tour .ex-time .ex-range { margin: 0; }
+  .in-tour .ex-time .ex-date { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+  .in-tour .ex-time .ex-legend { grid-column: 1 / -1; margin: 0; gap: 2px 10px; font-size: 11.5px; }
+  .in-tour .tour-wrap { position: fixed; z-index: 60; left: 0; right: 0; bottom: 0; top: auto; padding: 0; }
+  .in-tour .tour { width: 100%; max-height: 50vh; max-height: 50dvh; overflow-y: auto; border-radius: 18px 18px 0 0; border-left: 0; border-right: 0; border-bottom: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 24px rgba(0, 0, 0, .14); }
+  .in-tour .tour-top { margin-bottom: 2px; }
+  .in-tour .tour-n { font-size: 12px; letter-spacing: .06em; }
+  .in-tour .tour .x { width: 36px; height: 36px; }
+  .in-tour .tour-t { font-size: 23px; line-height: 1.05; margin: 2px 0 8px; }
+  .in-tour .tour-p { font-size: 15.5px; line-height: 1.45; margin-bottom: 10px; }
+  .in-tour .tour-nav .btn { min-height: 44px; padding: 0 16px; }
+  .in-tour .tour-dots i { width: 8px; height: 8px; }
+  .in-tour #dlg-rebar[open]:not(:modal) { position: fixed; z-index: 58; inset: 0 0 var(--tour-h, 230px) 0; width: 100%; height: auto; max-width: none; max-height: none; margin: 0; border: 0; border-radius: 0; }
+  .in-tour #dlg-rebar .rebar-body { padding: 10px 12px; }
+  .in-tour #dlg-rebar .rebar-frame { display: flex; align-items: center; }
+  .in-tour #dlg-rebar .rebar-frame svg { min-width: 0; max-height: 100%; }
+  .in-tour .viewer-hint { display: none; }
+}
+/* téléphone à l'horizontale : 3D à gauche, carte à droite */
+@media (max-height: 500px) and (orientation: landscape) {
+  .in-tour .ex-viewer { right: min(44vw, 420px); bottom: 0; }
+  .in-tour .ex-time:not([hidden]) { right: calc(min(44vw, 420px) + 8px); }
+  .in-tour .tour-wrap { left: auto; top: 0; width: min(44vw, 420px); }
+  .in-tour .tour { height: 100vh; height: 100dvh; max-height: none; border-radius: 0; border-left: 1px solid var(--trait); border-top-width: 4px; display: flex; flex-direction: column; }
+  .in-tour .tour-nav { margin-top: auto; }
+  .in-tour .tour-t { font-size: 21px; }
+  .in-tour .tour-p { font-size: 14.5px; }
+  .in-tour #dlg-rebar[open]:not(:modal) { inset: 0 min(44vw, 420px) 0 0; }
+}

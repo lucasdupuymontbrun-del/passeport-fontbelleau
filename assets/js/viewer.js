@@ -134,6 +134,7 @@ export async function createViewer(container, opts = {}) {
   scene.add(new THREE.HemisphereLight(0xf4f6f8, 0x8a8f86, 1.15));
   const sun = new THREE.DirectionalLight(0xffffff, 1.35); sun.position.set(40, 70, 25); scene.add(sun);
   const fill = new THREE.DirectionalLight(0xdfe7ef, 0.45); fill.position.set(-50, 30, -40); scene.add(fill);
+  const under = new THREE.DirectionalLight(0xeef1f4, 1.0); under.position.set(15, -60, 30); scene.add(under);
 
   const buildPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 400);
   const sectionPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 400);
@@ -148,6 +149,8 @@ export async function createViewer(container, opts = {}) {
   const groups = {};
   let targetGeo = null;
   for (const g of man.groups) {
+    // Terrain naturel retiré de la 3D (demande du 09/11/2026) : fondations et parking visibles.
+    if (g.name === 'topo') continue;
     const i16 = new Int16Array(buf, g.byteOffset, g.byteLength / 2);
     let els = g.elements.map(e => ({ id: e[0], s: e[1], n: e[2], i: e[3], r: e[4], g: g.name }));
     let pos;
@@ -180,7 +183,7 @@ export async function createViewer(container, opts = {}) {
   const names = Object.keys(groups);
   const ZG = zoneGroups(zone, names);
   const otherTower = names.filter(n => (zone === 'A2' ? n.startsWith('a1_') : (zone === 'A1' || zone === 'LT') ? n.startsWith('a2_') : false));
-  const defaultHidden = (n) => (n === 'found' && zone !== 'FOND') || (n === 'lt' && zone !== 'LT');
+  const defaultHidden = (n) => (n === 'found' && zone !== 'FOND' && zone !== 'ALL') || (n === 'lt' && zone !== 'LT');
 
   // Boîtes de zone et de site
   const zoneBox = new THREE.Box3();
@@ -260,7 +263,7 @@ export async function createViewer(container, opts = {}) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.maxPolarAngle = Math.PI * 0.495;
+  controls.maxPolarAngle = Math.PI * 0.6; // sans terrain : on peut regarder les fondations par en dessous
   controls.minDistance = 1.5;
   controls.maxDistance = 600;
   if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
@@ -294,8 +297,14 @@ export async function createViewer(container, opts = {}) {
   controls.target.copy(VIEWS.situation.look);
 
   let camTween = null;
+  // Écran en hauteur (téléphone) : on recule la caméra pour garder tout le site dans le cadre.
+  const fitAspect = (v) => {
+    const f = Math.min(1.9, Math.max(1, 1.25 / (camera.aspect || 1)));
+    return f === 1 ? v : { look: v.look, pos: v.look.clone().add(v.pos.clone().sub(v.look).multiplyScalar(f)) };
+  };
   function flyTo(view, ms = 1400) {
-    const v = VIEWS[view] || view;
+    let v = VIEWS[view] || view;
+    if (view === 'situation' || view === 'zone') v = fitAspect(v);
     if (reduceMotion() || ms === 0) { camera.position.copy(v.pos); controls.target.copy(v.look); controls.update(); return; }
     camTween = { t0: performance.now(), ms, p0: camera.position.clone(), l0: controls.target.clone(), p1: v.pos.clone(), l1: v.look.clone() };
   }
@@ -323,7 +332,7 @@ export async function createViewer(container, opts = {}) {
       if (fly !== null) flyTo('situation', fly);
     } else if (m === 'tour') {
       for (const n of names) if (!ZG.includes(n)) groups[n].visible = false;
-      ground.visible = isTower;
+      ground.visible = false;
       for (const n of ZG) {
         const st = groups[n].userData.style;
         if (NOISY_KINDS.includes(st.kind) && n !== tGroup) { groups[n].visible = false; continue; }
@@ -568,7 +577,7 @@ export async function createViewer(container, opts = {}) {
     scene.add(m);
     return m;
   }
-  function shown(n) { return (currentShow || names.filter(x => x !== 'found' && x !== 'lt')).includes(n); }
+  function shown(n) { return (currentShow || names.filter(x => (x !== 'found' || zone === 'ALL') && x !== 'lt')).includes(n); }
   function syncStatus() {
     if (!statusOn) return;
     for (const n of names) {
@@ -613,7 +622,7 @@ export async function createViewer(container, opts = {}) {
 
   function setFilter(z, cut) {
     if (intro) { intro = null; buildPlane.constant = 400; }
-    const show = z === 'ALL' ? names.filter(n => n !== 'found' && n !== 'lt') : zoneGroups(z, names);
+    const show = z === 'ALL' ? names.filter(n => n !== 'lt') : zoneGroups(z, names);
     for (const n of names) { groups[n].visible = show.includes(n) || (n === 'topo' && z === 'ALL' && cut == null); setOpacity(groups[n], groups[n].userData.style.opacity, 0); }
     sectionPlane.constant = cut == null ? 400 : cut;
     currentShow = show;
@@ -638,6 +647,7 @@ export async function createViewer(container, opts = {}) {
     setFilter,
     setMode: (m) => applyMode(m),
     replay,
+    overview: (ms) => flyTo('situation', ms),
     focus: () => { showTarget(true); applyMode('coupe'); },
     hasTarget: Boolean(targetGeo),
     get mode() { return mode; },

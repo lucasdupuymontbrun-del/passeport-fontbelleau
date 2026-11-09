@@ -37,8 +37,8 @@ function dialog() {
       h('header', {},
         h('h2', { id: 'dlg-rebar-t', text: 'Plan de ferraillage — exemple fictif' }),
         h('div', { class: 'pdf-actions' },
-          h('button', { class: 'btn btn-line', type: 'button', 'data-rb': 'svg' }, ico('i-download'), 'SVG'),
-          h('button', { class: 'btn btn-line', type: 'button', 'data-rb': 'print' }, ico('i-download'), 'Imprimer ou PDF'),
+          h('button', { class: 'btn btn-line', type: 'button', 'data-rb': 'svg', 'aria-label': 'Télécharger en SVG' }, ico('i-download'), h('span', { class: 'lbl', text: 'SVG' })),
+          h('button', { class: 'btn btn-line', type: 'button', 'data-rb': 'print', 'aria-label': 'Imprimer ou enregistrer en PDF' }, ico('i-download'), h('span', { class: 'lbl', text: 'Imprimer ou PDF' })),
           h('button', { class: 'x', type: 'button', 'aria-label': 'Fermer', onclick: () => dlg.close() }, ico('i-close')))),
       h('p', { class: 'rebar-warn', 'data-rb': 'warn' }),
       h('div', { class: 'rebar-frame', 'data-rb': 'frame' })));

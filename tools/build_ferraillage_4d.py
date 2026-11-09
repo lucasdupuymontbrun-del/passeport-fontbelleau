@@ -178,5 +178,6 @@ for row in ix['ouvrages']:
         json.dump(rec, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 ix['statuts_4d'] = STATUS_ORDER
 ix['epoque_4d'] = EPOCH.isoformat()
+ix['nb_ferraillage'] = nf
 json.dump(ix, open(os.path.join(ROOT, 'data', 'index.json'), 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('ferraillages', nf, 'ouvrages', len(ix['ouvrages']))

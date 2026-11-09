@@ -208,55 +208,95 @@ function tourSteps() {
   const pm = S.byRef.get('A2-PM106');
   const pct = () => { const done = S.rows.filter(r => ['pose', 'receptionne'].includes(statusAt(r, S.today))).length; return Math.round(done / S.rows.length * 100); };
   const nb = S.rows.length.toLocaleString('fr-FR');
-  const withRebar = S.rows.filter(r => ['premur', 'voile', 'poteau', 'poutre', 'dalle', 'fondation'].includes(r.famille)).length;
+  const withRebar = S.nbRebar;
+  const fiche = pm && { label: 'Ouvrir la fiche d\'A2 PM 106', href: 'A2-PM106/' };
   return [
     { t: `Une maquette, ${nb} ouvrages`,
       p: `Toute la maquette Revit du groupe est en ligne : les deux tours, le parking, les fondations et les abords. Chaque élément a sa fiche. Un seul QR code, affiché à l'entrée du chantier, ouvre cette vue sur le téléphone.`,
+      m: 'Toute la maquette Revit est en ligne : tours, parking, fondations, abords. Chaque élément a sa fiche, et un seul QR code ouvre cette vue sur le téléphone.',
       go: () => { closeRebar(); hidePanel(); setView('maquette'); setZone('ALL', { silent: true }); S.viewer?.replay(); } },
     pm && { t: 'Retrouver un ouvrage en quelques secondes',
       p: 'On tape sa référence, ou on le touche dans la 3D. La maquette se coupe à son étage, le met en rose et affiche son résumé : statut, prochaine échéance, lot. Ici, le prémur A2 PM 106 du noyau de la tour A2.',
+      m: 'On tape une référence ou on touche la 3D : la maquette se coupe à l\'étage et met l\'ouvrage en rose. Ici, le prémur A2 PM 106 de la tour A2.', obj: pm,
       go: () => { closeRebar(); setView('maquette'); $('#ex-search').value = 'A2 PM 106'; selectRow(pm); } },
     pm && { t: 'La fiche de chaque ouvrage',
       p: "Un bouton ouvre la fiche complète : identité tirée de la maquette, plans du DCE, approvisionnement, planning et suivi de chantier. Chaque information indique sa source et sa fiabilité ; ce qui est inventé pour la démonstration est hachuré « Fictif ».",
+      m: 'La fiche complète réunit identité, plans du DCE, approvisionnement, planning et suivi. Chaque information indique sa source ; ce qui est inventé est hachuré « Fictif ».', obj: pm, cta: fiche,
       go: () => { closeRebar(); if (S.current !== pm) selectRow(pm); $('[data-p="open"]').classList.add('is-pulse'); setTimeout(() => $('[data-p="open"]').classList.remove('is-pulse'), 2600); } },
     pm && { rebar: true, t: 'Du modèle au plan de ferraillage',
       p: `Pour les ${withRebar.toLocaleString('fr-FR')} ouvrages en béton, le site dessine un plan de ferraillage d'exemple avec les vraies dimensions de la maquette : élévation, coupe, nomenclature, poids d'acier. C'est un exemple fictif, pas un plan d'exécution : aucun calcul de structure n'est fait.`,
+      m: `Pour ${withRebar.toLocaleString('fr-FR')} ouvrages en béton, un plan de ferraillage d'exemple est dessiné avec les dimensions de la maquette. Exemple fictif : aucun calcul de structure.`,
       go: async () => { if (S.current !== pm) selectRow(pm); const d = S.fiche || await (await fetch('data/o/A2-PM106.json')).json(); if (S.tour) openRebar(d, { modal: false }); } },
     { t: 'Le chantier aujourd\'hui',
       p: `Chaque ouvrage prend la couleur de son statut. Vert : posé ; orange : sur le chantier ; teintes pâles : commandé, en fabrication ou à commander. Aujourd'hui, ${pct()} % des ouvrages sont posés. Le tableau sous la maquette donne l'avancement par zone et les livraisons de la semaine.`,
-      go: () => { closeRebar(); hidePanel(); setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); setView('avancement'); setDay(S.today); } },
+      m: `Chaque ouvrage prend la couleur de son statut : vert posé, orange sur le chantier, pâle commandé ou en usine. Aujourd'hui, ${pct()} % des ouvrages sont posés.`,
+      go: () => { closeRebar(); hidePanel(); setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); S.viewer?.clearSelection(); S.viewer?.overview?.(); setView('avancement'); setDay(S.today); } },
     { t: 'Le chantier en 4D',
       p: "Le curseur fait avancer le temps : fondations au printemps 2026, parking l'été, puis les tours étage par étage, au rythme d'un niveau toutes les deux semaines, et le second œuvre derrière. Le planning est un scénario de démonstration, le DCE n'en contient pas.",
-      go: () => { closeRebar(); hidePanel(); setView('avancement'); stop(); setDay(S.dmin); setTimeout(() => { if (S.tour) play(); }, 400); } },
+      m: 'Le curseur fait avancer le temps : fondations, parking, puis les tours étage par étage, un niveau toutes les deux semaines. Planning de démonstration.',
+      go: () => { closeRebar(); hidePanel(); S.viewer?.clearSelection(); S.viewer?.overview?.(); setView('avancement'); stop(); setDay(S.dmin); setTimeout(() => { if (S.tour) play(); }, 400); } },
     pm && { t: 'Le suivi depuis le chantier',
       p: "Un éditeur connecté change le statut, ajoute une photo ou une réserve depuis son téléphone ; l'historique garde qui a fait quoi et quand. A2 PM 106 est déjà suivi en ligne : son statut vient de la base de données, pas du scénario.",
+      m: 'Depuis son téléphone, un éditeur change le statut, ajoute une photo ou une réserve ; l\'historique garde qui a fait quoi. A2 PM 106 est déjà suivi en ligne.', obj: pm, cta: fiche && { ...fiche, label: 'Voir le suivi d\'A2 PM 106' },
       go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
   ].filter(Boolean);
 }
-function tourShow(i) {
+const compactQ = matchMedia('(max-width: 700px), (max-height: 500px)');
+function tourShow(i, rerun = true) {
   const st = S.tour; if (!st) return;
   S.tourI = Math.max(0, Math.min(st.length - 1, i));
   const s0 = st[S.tourI];
-  $('[data-bind="tour-n"]').textContent = `Étape ${S.tourI + 1} sur ${st.length}`;
+  const small = compactQ.matches;
+  $('[data-bind="tour-n"]').textContent = `${small ? '' : 'Étape '}${S.tourI + 1} / ${st.length}`;
   $('[data-bind="tour-t"]').textContent = s0.t;
-  $('[data-bind="tour-p"]').textContent = s0.p;
+  $('[data-bind="tour-p"]').textContent = (small && s0.m) || s0.p;
+  const obj = $('[data-bind="tour-obj"]');
+  obj.hidden = !s0.obj;
+  if (s0.obj) {
+    const stt = S.view === 'avancement' ? statusAt(s0.obj, S.day) : statusOf(s0.obj).cle;
+    obj.textContent = '';
+    obj.append(el('strong', { text: s0.obj.reference }), el('span', { text: ` · ${statusDef(stt).label}` }));
+  }
+  const cta = $('[data-bind="tour-cta"]');
+  cta.hidden = !s0.cta;
+  if (s0.cta) { cta.href = s0.cta.href; $('span', cta).textContent = s0.cta.label; }
+  $('.tour-extra').hidden = !s0.obj && !s0.cta;
   const dots = $('[data-bind="tour-dots"]'); dots.textContent = '';
   st.forEach((_, k) => dots.append(el('i', { class: k === S.tourI ? 'is-on' : '' })));
   $('[data-act="tour-prev"]').disabled = S.tourI === 0;
   $('[data-act="tour-next"]').textContent = S.tourI === st.length - 1 ? 'Terminer' : 'Suivant';
   document.body.classList.toggle('tour-rebar', Boolean(s0.rebar));
-  s0.go();
+  if (rerun) {
+    s0.go();
+    // le statut affiché dépend de la vue réglée par go()
+    if (s0.obj) setTimeout(() => S.tour && S.tourI === st.indexOf(s0) && tourShow(S.tourI, false), 60);
+  }
 }
 function tourStart() {
   S.tour = tourSteps();
   $('[data-bind="tour"]').hidden = false; document.body.classList.add('in-tour');
-  $('#viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (compactQ.matches) window.scrollTo(0, 0);
+  else $('#viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
   tourShow(0);
 }
 function tourEnd() {
   stop(); closeRebar();
   $('[data-bind="tour"]').hidden = true; document.body.classList.remove('in-tour');
   S.tour = null; document.body.classList.remove('tour-rebar');
+}
+function wireTourTouch() {
+  const card = $('.tour');
+  // hauteur de la carte, pour placer la 3D au-dessus sur téléphone
+  new ResizeObserver(() => document.documentElement.style.setProperty('--tour-h', `${Math.ceil(card.getBoundingClientRect().height)}px`)).observe(card);
+  compactQ.addEventListener('change', () => { if (S.tour) tourShow(S.tourI, false); });
+  let x0 = null, y0 = 0;
+  card.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  card.addEventListener('touchend', (e) => {
+    if (x0 == null || !S.tour) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) { if (S.tourI < S.tour.length - 1) tourShow(S.tourI + 1); } else tourShow(S.tourI - 1);
+  });
 }
 
 // ---------- filtres
@@ -352,10 +392,12 @@ async function main() {
   });
   wireSearch();
   S.order = ix.statuts_4d || [];
+  S.nbRebar = ix.nb_ferraillage || 0;
   if (S.order.length) setupTime(); else $$('[data-view="avancement"]').forEach(b => { b.hidden = true; });
   $$('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
   $('[data-act="tour"]').addEventListener('click', () => (S.tour ? tourEnd() : tourStart()));
   $('[data-act="tour-close"]').addEventListener('click', tourEnd);
+  wireTourTouch();
   $('[data-act="tour-prev"]').addEventListener('click', () => tourShow(S.tourI - 1));
   $('[data-act="tour-next"]').addEventListener('click', () => { if (S.tourI >= S.tour.length - 1) tourEnd(); else tourShow(S.tourI + 1); });
   document.addEventListener('keydown', (e) => {
