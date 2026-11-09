@@ -181,6 +181,8 @@ python tools/qr.py <adresse>/ Projet-Fontbelleau "Fontbelleau" "Tours A1 et A2, 
 
 Le script relit chaque QR produit et refuse de terminer si l'adresse lue ne correspond pas. Les étiquettes mesurent 150 × 100 mm ; imprimez-les à 100 %. Le lien `…/?o=<référence>` ouvre la maquette directement sur un ouvrage.
 
+**Version aux couleurs de Veck Construction** (noir et doré du logo, logo VECK au centre du QR, équerres dorées) : `python tools/qr_veck.py` produit `qr/Veck_<ref>.png` et `qr/Etiquette_Veck_<ref>.pdf` pour les deux QR (adresses en tête du script). Le QR est en correction d'erreur maximale (H) pour tolérer le logo ; le script le relit en taille normale et réduite et échoue si une relecture rate. Polices Archivo Black / ExtraBold (licence OFL) dans `tools/fonts/`.
+
 ## 8. Plans du DCE consultables depuis les fiches
 
 Les fiches renvoient vers les pièces du DCE correspondant à leur zone et à leur étage. Elles s'ouvrent après connexion (membres) depuis le compartiment privé `documents` de Supabase. Quatre pièces y sont déjà, dans `A2-PM106/` (GO.03.02.05, GO.03.02.07, coupe A2, CCTP 301). Les autres sont attendues dans `documents/dce/` sous les noms indiqués dans `data/commun.json` (champ `fichier`) ; tant qu'un fichier manque, la fiche l'indique au clic.
