@@ -827,3 +827,24 @@ li.empty { padding: 4px 0; }
   .sec[data-fold]:not(.is-open) > .sec-head > :not(h2):not(p):not(.fold-btn) { display: none; }
 }
 @media print { .sec[data-fold] > .sec-body { display: block !important; } .fold-btn { display: none !important; } }
+
+/* ---------- couleurs Veck Construction ----------
+   Noir et or pour la marque (boutons de présentation, soulignés, visite guidée).
+   Le rose reste le « traceur » : élément sélectionné dans la 3D et sur les plans, repères du planning.
+   Code des tours, le même sur les trois pages : A1 bleu, A2 orange. */
+:root { --or: #b89464; --or-fonce: #7a5c33; --or-trait: #9a7748; --noir-veck: #0b0b0d; --a1: #2a78d6; --a2: #eb6834; }
+.spray path { stroke: var(--or); }
+.secnav a[aria-current="true"] { border-bottom-color: var(--or-trait); }
+.btn-tour { background: var(--noir-veck); border-color: var(--noir-veck); color: #fff; }
+.btn-tour:hover { background: #26262b; border-color: #26262b; color: #fff; }
+.btn-tour .ico { color: var(--or); }
+.tour { border-top-color: var(--or); }
+.tour-n { color: var(--or-fonce); }
+.tour-dots i.is-on { background: var(--or); }
+.en-go { color: var(--or-fonce); }
+.chip-btn[data-zone="A1"], .chip-btn[data-zone="A2"] { display: inline-flex; align-items: center; gap: 7px; }
+.chip-btn[data-zone="A1"]::before, .chip-btn[data-zone="A2"]::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--a1); flex: none; }
+.chip-btn[data-zone="A2"]::before { background: var(--a2); }
+
+/* ---------- ciel de jour derrière la maquette ---------- */
+.viewer { background: linear-gradient(180deg, #6fa6dc 0%, #a9cdee 30%, #dbe8f1 56%, #eceeec 78%, #e2e5e1 100%); }
