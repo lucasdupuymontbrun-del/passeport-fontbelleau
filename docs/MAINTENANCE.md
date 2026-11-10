@@ -222,3 +222,10 @@ Ordre de mise à jour après une modification de la maquette : 1) régénérer c
 - **Rubriques repliées sur téléphone** : `assets/js/fold.js` (même fichier dans les deux dépôts) replie, sous 760 px de large, les rubriques marquées `data-fold="…"` (le texte de l'attribut est celui du bouton). Fiches : identité, documents, approvisionnement. Comparatif : lots, quantités, coûts par poste, sources. Le menu des rubriques et les liens `#rubrique` déplient. Rien ne change sur ordinateur ni à l'impression.
 - **Couleurs** : noir et or Veck (`--or`, `--or-fonce`, `--noir-veck`) pour les boutons « Présentation », les soulignés et la visite guidée ; le rose « traceur » reste réservé à l'élément sélectionné (3D, plans) et aux repères. Code des tours partout : A1 bleu (`--a1`), A2 orange (`--a2`). Dans le jumeau, les barres gardent la couleur de l'usage ; seuls les repères A1 / A2 prennent la couleur de la tour.
 - **Maquette** : ciel de jour en fond (dégradé CSS de `.viewer`). La visite guidée de l'accueil a une 8e étape qui mène à la présentation du jumeau (`?presentation`).
+
+## Vue « Performance thermique » de la maquette (10/11/2026)
+
+- Bouton « Performance thermique » à côté de « Maquette » et « Avancement 4D » : chaque paroi prend la couleur de son coefficient U (W/m².K). Tour A1 : doublage intérieur, U 0,27 (étude thermique RT 2012) ; tour A2 : ITE, U ≈ 0,21 ; planchers et toitures : U calculé depuis la résistance R du CCTP (+ Rsi + Rse + dalle) ; balcons sans rupteur : pont thermique ; fenêtres : Uw absent du DCE ; extracteurs et capteurs de la variante repérés.
+- Données : `data/energie/ouvrages.json` (profil thermique de chaque ouvrage, écrit par le générateur du jumeau). Classes et valeurs : `TH` et `TH_PROFIL` dans `assets/js/explore.js`.
+- Un clic sur une paroi ajoute au résumé son rôle thermique, U, sa composition et la propriété IFC correspondante (Pset_WallCommon.ThermalTransmittance).
+- La visite guidée a une étape « La performance thermique dans la maquette », avant celle du jumeau.
