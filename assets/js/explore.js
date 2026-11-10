@@ -239,6 +239,11 @@ function tourSteps() {
       p: "Un éditeur connecté change le statut, ajoute une photo ou une réserve depuis son téléphone ; l'historique garde qui a fait quoi et quand. A2 PM 106 est déjà suivi en ligne : son statut vient de la base de données, pas du scénario.",
       m: 'Depuis son téléphone, un éditeur change le statut, ajoute une photo ou une réserve ; l\'historique garde qui a fait quoi. A2 PM 106 est déjà suivi en ligne.', obj: pm, cta: fiche && { ...fiche, label: 'Voir le suivi d\'A2 PM 106' },
       go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
+    { t: 'Après la livraison : le jumeau énergétique',
+      p: "Les mêmes tours, une fois habitées. Le jumeau énergétique éclaire chaque logement selon sa consommation, signale les anomalies et compare la tour A1 du DCE à la variante A2 du groupe. Il a son propre site, relié à celui-ci par la barre du haut.",
+      m: 'Une fois les tours habitées, le jumeau énergétique suit la consommation de chaque logement et compare A1 et A2. Il a son propre site.',
+      cta: { label: 'Lancer la présentation du jumeau', href: 'https://lucasdupuymontbrun-del.github.io/jumeau-fontbelleau/?presentation' },
+      go: () => { closeRebar(); stop(); hidePanel(); $('#ex-search').value = ''; setView('maquette'); setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); S.viewer?.clearSelection(); S.viewer?.overview?.(); } },
   ].filter(Boolean);
 }
 const compactQ = matchMedia('(max-width: 700px), (max-height: 500px)');
