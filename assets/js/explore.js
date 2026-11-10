@@ -123,7 +123,7 @@ const TH = [
   { k: 'u1', label: 'U ≤ 0,17 W/m².K : très isolé', css: '#1b7a4e' },
   { k: 'u2', label: 'U de 0,17 à 0,22', css: '#6dbb85' },
   { k: 'u3', label: 'U de 0,22 à 0,30', css: '#f0a43a' },
-  { k: 'pont', label: 'Pont thermique : balcon sans rupteur (tour A1)', css: '#d03b3b' },
+  { k: 'pont', label: 'Pont thermique : jonction balcon-façade sans rupteur', css: '#d03b3b' },
   { k: 'uw', label: 'Fenêtre : Uw absent du DCE', css: '#8fa9c8' },
   { k: 'equip', label: 'Équipement de la variante', css: '#6a4ba0' },
 ];
@@ -137,8 +137,9 @@ function thClass(prof) {
   if (!t) return null;
   return t.k || (t.u <= 0.17 ? 'u1' : t.u <= 0.22 ? 'u2' : 'u3');
 }
-// laissés en gris dans cette vue (choix du groupe, 10/11/2026) : dalle haute du parking et balcons de la tour A2
-const thGris = (ref, prof) => prof === 'parking_ph' || (prof === 'balcon' && ref.startsWith('A2'));
+// laissés en gris dans cette vue (choix du groupe, 10/11/2026) : dalle haute du parking et balcons ;
+// le pont thermique des balcons est montré par un trait rouge à la jonction avec la façade (viewer.setMarks)
+const thGris = (ref, prof) => prof === 'parking_ph' || prof === 'balcon';
 function loadThermo() {
   if (!S.thermoP) S.thermoP = fetch('data/energie/ouvrages.json').then(r => r.json()).then(d => (S.thermo = d));
   return S.thermoP;
@@ -150,21 +151,24 @@ async function paintThermo() {
   cancelAnimationFrame(thermoRaf);
   thermoRaf = requestAnimationFrame(() => {
     const css = Object.fromEntries(TH.map(c => [c.k, c.css]));
-    const n = {}, seen = new Set();
+    const n = {}, seen = new Set(), ponts = new Set();
     S.viewer.setStatusView((e) => {
-      const r = S.byId.get(e.id), o = r && T.ouvrages[r.ref], k = o && !thGris(r.ref, o.p) && thClass(o.p);
+      const r = S.byId.get(e.id), o = r && T.ouvrages[r.ref];
+      if (o && o.p === 'balcon') { ponts.add(e.id); if (!seen.has(r.ref)) { seen.add(r.ref); n.pont = (n.pont || 0) + 1; } }
+      const k = o && !thGris(r.ref, o.p) && thClass(o.p);
       if (!k) return null;
       if (!seen.has(r.ref)) { seen.add(r.ref); n[k] = (n[k] || 0) + 1; }
       return { hex: parseInt(css[k].slice(1), 16), m: 'solid' };
     });
+    S.viewer.setMarks?.(ponts, parseInt(css.pont.slice(1), 16));
     const lg = $('[data-bind="th-legend"]'); lg.textContent = '';
-    for (const c of TH) lg.append(el('li', {}, el('i', { style: `background:${c.css}` }), `${c.label} (${n[c.k] || 0})`));
-    lg.append(el('li', {}, el('i', { class: 'is-ghost', style: 'background:#b9bfc2' }), 'Intérieur ou hors du volume chauffé, dalle haute du parking, balcons de la tour A2'));
+    for (const c of TH) lg.append(el('li', {}, el('i', { class: c.k === 'pont' ? 'is-line' : null, style: `background:${c.css}` }), `${c.label} (${n[c.k] || 0})`));
+    lg.append(el('li', {}, el('i', { class: 'is-ghost', style: 'background:#b9bfc2' }), 'Intérieur ou hors du volume chauffé, dalle haute du parking, balcons'));
   });
 }
 function thermoFacts(row, add) {
   const T = S.thermo, o = T && T.ouvrages[row.ref], pr = o && T.profils[o.p];
-  if (!pr || thGris(row.ref, o.p)) return;
+  if (!pr || o.p === 'parking_ph') return;
   const t = TH_PROFIL[o.p];
   add('Rôle thermique', pr.titre);
   if (t && t.u && !(pr.lignes || []).some(l => /^Coefficient U/.test(l.label))) add('Coefficient U (calculé depuis R)', `≈ ${t.u.toFixed(2).replace('.', ',')} W/m².K`);
@@ -183,6 +187,7 @@ function setView(v) {
   if (v === 'avancement') paint();
   else if (v === 'thermique') { stop(); loadThermo().then(() => { paintThermo(); if (S.current) showPanel(S.current); }); }
   else { stop(); S.viewer?.setStatusView(null); if (S.current) showPanel(S.current); }
+  if (v !== 'thermique') S.viewer?.setMarks?.(null);
 }
 function setDay(n) {
   S.day = Math.max(S.dmin, Math.min(S.dmax, Math.round(n)));
@@ -301,8 +306,8 @@ function tourSteps() {
       m: 'Depuis son téléphone, un éditeur change le statut, ajoute une photo ou une réserve ; l\'historique garde qui a fait quoi. A2 PM 106 est déjà suivi en ligne.', obj: pm, cta: fiche && { ...fiche, label: 'Voir le suivi d\'A2 PM 106' },
       go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
     { t: 'La performance thermique dans la maquette',
-      p: "Chaque paroi prend la couleur de son coefficient U, tiré du DCE pour la tour A1 et calculé pour la variante de la tour A2. Isolée par l'extérieur, la tour A2 passe de l'orange au vert. Les balcons de la tour A1, en rouge, sont des ponts thermiques. Un clic donne la valeur, sa source et la propriété IFC correspondante.",
-      m: 'Chaque paroi prend la couleur de son coefficient U : la tour A2, isolée par l\'extérieur, passe de l\'orange au vert ; les balcons de la tour A1, en rouge, sont des ponts thermiques.',
+      p: "Chaque paroi prend la couleur de son coefficient U, tiré du DCE pour la tour A1 et calculé pour la variante de la tour A2. Isolée par l'extérieur, la tour A2 passe de l'orange au vert. Les traits rouges marquent les ponts thermiques, là où les balcons traversent la façade sans rupteur. Un clic donne la valeur, sa source et la propriété IFC correspondante.",
+      m: 'Chaque paroi prend la couleur de son coefficient U : la tour A2, isolée par l\'extérieur, passe de l\'orange au vert ; les traits rouges marquent les ponts thermiques des balcons.',
       go: () => { closeRebar(); stop(); hidePanel(); $('#ex-search').value = ''; setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); S.viewer?.clearSelection(); S.viewer?.overview?.(); setView('thermique'); } },
     { t: 'Après la livraison : le jumeau énergétique',
       p: "Les mêmes tours, une fois habitées. Le jumeau énergétique éclaire chaque logement selon sa consommation, signale les anomalies et compare la tour A1 du DCE à la variante A2 du groupe. Il a son propre site, relié à celui-ci par la barre du haut.",

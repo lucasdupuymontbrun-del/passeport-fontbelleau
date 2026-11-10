@@ -579,6 +579,7 @@ export async function createViewer(container, opts = {}) {
   }
   function shown(n) { return (currentShow || names.filter(x => (x !== 'found' || zone === 'ALL') && x !== 'lt')).includes(n); }
   function syncStatus() {
+    for (const n of Object.keys(marks)) marks[n].visible = shown(n);
     if (!statusOn) return;
     for (const n of names) {
       if (n === 'topo') continue;
@@ -620,6 +621,58 @@ export async function createViewer(container, opts = {}) {
     syncStatus();
   }
 
+  // ---- repères de jonction (vue thermique) : bande colorée là où un balcon traverse la façade
+  // ids : Set d'identifiants d'éléments ; la bande suit la façade (arc autour de l'axe de la tour) sur l'épaisseur de la dalle.
+  const marks = {};
+  const markMat = new THREE.MeshBasicMaterial({ color: 0xd03b3b, side: THREE.DoubleSide, clippingPlanes: [buildPlane, sectionPlane],
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  function setMarks(ids, hex = 0xd03b3b) {
+    for (const n of Object.keys(marks)) { scene.remove(marks[n]); marks[n].geometry.dispose(); delete marks[n]; }
+    if (!ids || !ids.size) return;
+    markMat.color.setHex(hex);
+    for (const n of names) {
+      if (n === 'topo') continue;
+      const floors = groups[n.startsWith('a2_') ? 'a2_floors' : 'a1_floors'];
+      if (!floors) continue;
+      const ax = floors.geometry.boundingBox.getCenter(new THREE.Vector3());
+      const P = groups[n].geometry.attributes.position.array;
+      const v = [];
+      const quad = (a, b, c, d) => v.push(...a, ...b, ...c, ...a, ...c, ...d);
+      for (const e of groups[n].userData.elements) {
+        if (!ids.has(e.id)) continue;
+        let rMin = Infinity, y0 = Infinity, y1 = -Infinity;
+        const pts = [];
+        for (let k = e.s * 9, b = (e.s + e.n) * 9; k < b; k += 3) {
+          const dx = P[k] - ax.x, dz = P[k + 2] - ax.z, r = Math.hypot(dx, dz);
+          pts.push([r, Math.atan2(dz, dx)]);
+          if (r < rMin) rMin = r;
+          if (P[k + 1] < y0) y0 = P[k + 1];
+          if (P[k + 1] > y1) y1 = P[k + 1];
+        }
+        let ang = pts.filter(q => q[0] < rMin + 0.3).map(q => q[1]);
+        if (Math.max(...ang) - Math.min(...ang) > Math.PI) ang = ang.map(a => (a < 0 ? a + 2 * Math.PI : a));
+        const a0 = Math.min(...ang), a1 = Math.max(...ang);
+        const R0 = rMin - 0.05, R1 = rMin + 0.3, ya = y0 - 0.15, yb = y1 + 0.15;
+        const steps = Math.max(2, Math.ceil(((a1 - a0) * rMin) / 0.4));
+        const at = (R, t, y) => [ax.x + R * Math.cos(t), y, ax.z + R * Math.sin(t)];
+        for (let i = 0; i < steps; i++) {
+          const t0 = a0 + ((a1 - a0) * i) / steps, t1 = a0 + ((a1 - a0) * (i + 1)) / steps;
+          quad(at(R1, t0, ya), at(R1, t1, ya), at(R1, t1, yb), at(R1, t0, yb));      // face vue de l'extérieur
+          quad(at(R0, t0, yb), at(R1, t0, yb), at(R1, t1, yb), at(R0, t1, yb));      // dessus
+          quad(at(R0, t0, ya), at(R0, t1, ya), at(R1, t1, ya), at(R1, t0, ya));      // dessous
+        }
+      }
+      if (!v.length) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+      const mesh = new THREE.Mesh(g, markMat);
+      mesh.renderOrder = 12;
+      mesh.visible = shown(n);
+      scene.add(mesh);
+      marks[n] = mesh;
+    }
+  }
+
   function setFilter(z, cut) {
     if (intro) { intro = null; buildPlane.constant = 400; }
     const show = z === 'ALL' ? names.filter(n => n !== 'lt') : zoneGroups(z, names);
@@ -643,6 +696,7 @@ export async function createViewer(container, opts = {}) {
   return {
     select,
     setStatusView,
+    setMarks,
     clearSelection: clearSel,
     setFilter,
     setMode: (m) => applyMode(m),

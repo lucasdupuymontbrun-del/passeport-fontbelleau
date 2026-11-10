@@ -677,6 +677,7 @@ li.empty { padding: 4px 0; }
 .ex-legend li { display: inline-flex; align-items: center; gap: 6px; }
 .ex-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .ex-legend i.is-ghost { opacity: .45; }
+.ex-legend i.is-line { width: 16px; height: 5px; border-radius: 1px; }
 .ex-dash { margin: 12px 0 0; padding: 14px 16px; background: var(--blanc); border: 1px solid var(--trait); border-radius: var(--r-m); }
 .ex-dash[hidden] { display: none; }
 .ex-dash-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; margin-bottom: 10px; }
