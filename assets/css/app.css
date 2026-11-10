@@ -791,3 +791,24 @@ li.empty { padding: 4px 0; }
   .in-tour .tour-p { font-size: 14.5px; }
   .in-tour #dlg-rebar[open]:not(:modal) { inset: 0 min(44vw, 420px) 0 0; }
 }
+
+/* ---------- navigation entre les sites du projet (identique dans les deux dépôts) ---------- */
+.sitenav { display: flex; gap: 2px; padding: 3px; border-radius: 99px; background: var(--papier); border: 1px solid var(--trait); flex: none; }
+.sitenav a {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0 14px; border-radius: 99px;
+  font-size: 14px; font-weight: 600; color: var(--ardoise); text-decoration: none; white-space: nowrap;
+}
+.sitenav a:hover { color: var(--graphite); background: var(--blanc); }
+.sitenav a[aria-current] { background: var(--graphite); color: var(--blanc); }
+.topbar .sitenav { margin-left: auto; }
+.topbar .sitenav + .account { margin-left: 0; }
+@media (max-width: 1240px) { .sitenav .sn-long { display: none; } }
+/* la barre des sites dit déjà où l'on est : on allège la marque quand la place manque */
+@media (max-width: 1520px) { .topbar:has(.sitenav) .brand-name .hide-s, .topbar:has(.sitenav) .brand-sub { display: none; } }
+@media (max-width: 860px) {
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .topbar .sitenav { order: 10; flex: 1 1 100%; margin-left: 0; }
+  .topbar .sitenav + .account { margin-left: auto; }
+  .sitenav a { flex: 1; padding: 0 8px; font-size: 13.5px; }
+}
+@media print { .sitenav { display: none; } }
