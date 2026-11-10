@@ -848,3 +848,11 @@ li.empty { padding: 4px 0; }
 
 /* ---------- ciel de jour derrière la maquette ---------- */
 .viewer { background: linear-gradient(180deg, #6fa6dc 0%, #a9cdee 30%, #dbe8f1 56%, #eceeec 78%, #e2e5e1 100%); }
+
+/* ---------- vue « performance thermique » ---------- */
+.ex-thermo { margin: 0 0 10px; padding: 10px 14px; background: var(--blanc); border: 1px solid var(--trait); border-radius: var(--r-m); display: grid; gap: 8px; }
+.ex-thermo[hidden] { display: none; }
+.ex-th-intro { margin: 0; font-size: 13.5px; color: var(--graphite); max-width: 110ch; }
+.ex-thermo .ex-legend { grid-area: auto; }
+.th-short { display: none; }
+@media (max-width: 620px) { .th-long { display: none; } .th-short { display: inline; } }

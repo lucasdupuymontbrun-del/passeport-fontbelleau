@@ -65,6 +65,7 @@
       <div class="ex-view" role="group" aria-label="Affichage de la maquette">
         <button type="button" class="chip-btn" data-view="maquette" aria-pressed="true">Maquette</button>
         <button type="button" class="chip-btn" data-view="avancement" aria-pressed="false">Avancement 4D</button>
+        <button type="button" class="chip-btn" data-view="thermique" aria-pressed="false"><span class="th-long">Performance thermique</span><span class="th-short">Thermique</span></button>
       </div>
       <label class="ex-storey">Étage
         <select id="ex-storey" disabled>
@@ -82,6 +83,11 @@
     </div>
     <div class="ex-date"><strong data-bind="date">—</strong><button class="btn btn-quiet btn-s" type="button" data-act="today">Aujourd'hui</button></div>
     <ul class="ex-legend" data-bind="legend"></ul>
+  </div>
+
+  <div class="ex-thermo" data-bind="thermo" hidden>
+    <p class="ex-th-intro">Chaque paroi prend la couleur de son coefficient de transmission thermique U, en W/m².K : plus il est bas, moins la chaleur s'échappe. Tour A1 : doublage intérieur, U 0,27. Tour A2 : isolation par l'extérieur, U ≈ 0,21. Touchez une paroi pour voir sa valeur, sa source et sa propriété IFC.</p>
+    <ul class="ex-legend" data-bind="th-legend"></ul>
   </div>
 
   <div class="ex-stage">

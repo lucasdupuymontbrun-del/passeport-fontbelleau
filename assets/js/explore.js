@@ -89,6 +89,7 @@ async function showPanel(row, el3d) {
   add('Catégorie', S.commun.familles[row.famille] || row.famille);
   add('Zone', ZONE_LABEL[row.zone] || row.zone);
   add('Étage', row.etage);
+  if (S.view === 'thermique') thermoFacts(row, add);
   p.hidden = false;
   try {
     const d = await (await fetch(`data/o/${encodeURIComponent(row.ref)}.json`)).json();
@@ -116,12 +117,70 @@ function paint() {
     if (S.current) showPanel(S.current);
   });
 }
+// ---------- vue « performance thermique » : chaque paroi prend la couleur de son coefficient U
+// U du DCE (tour A1) ou de la variante (tour A2) ; pour les planchers et toitures, U calculé depuis R (+ Rsi + Rse + dalle béton ≈ 0,10)
+const TH = [
+  { k: 'u1', label: 'U ≤ 0,17 W/m².K : très isolé', css: '#1b7a4e' },
+  { k: 'u2', label: 'U de 0,17 à 0,22', css: '#6dbb85' },
+  { k: 'u3', label: 'U de 0,22 à 0,30', css: '#f0a43a' },
+  { k: 'pont', label: 'Pont thermique : balcon sans rupteur', css: '#d03b3b' },
+  { k: 'uw', label: 'Fenêtre : Uw absent du DCE', css: '#8fa9c8' },
+  { k: 'equip', label: 'Équipement de la variante', css: '#6a4ba0' },
+];
+const TH_PROFIL = {
+  facade_A1: { u: 0.27 }, lt_doublage: { u: 0.27 }, facade_A2: { u: 0.21 }, ite_A2: { u: 0.21 },
+  plancher_bas: { u: 1 / (6.3 + 0.21 + 0.1) }, toiture_A1: { u: 1 / (5.4 + 0.14 + 0.1) }, toiture_A2: { u: 1 / (5.45 + 0.14 + 0.1) }, parking_ph: { u: 1 / (3.7 + 0.21 + 0.1) },
+  balcon: { k: 'pont' }, menuiserie_A1: { k: 'uw' }, menuiserie_A2: { k: 'uw' }, hall: { k: 'uw' }, extracteur: { k: 'equip' }, capteur: { k: 'equip' },
+};
+function thClass(prof) {
+  const t = TH_PROFIL[prof];
+  if (!t) return null;
+  return t.k || (t.u <= 0.17 ? 'u1' : t.u <= 0.22 ? 'u2' : 'u3');
+}
+function loadThermo() {
+  if (!S.thermoP) S.thermoP = fetch('data/energie/ouvrages.json').then(r => r.json()).then(d => (S.thermo = d));
+  return S.thermoP;
+}
+let thermoRaf = 0;
+async function paintThermo() {
+  const T = await loadThermo();
+  if (S.view !== 'thermique' || !S.viewer) return;
+  cancelAnimationFrame(thermoRaf);
+  thermoRaf = requestAnimationFrame(() => {
+    const css = Object.fromEntries(TH.map(c => [c.k, c.css]));
+    const n = {}, seen = new Set();
+    S.viewer.setStatusView((e) => {
+      const r = S.byId.get(e.id), o = r && T.ouvrages[r.ref], k = o && thClass(o.p);
+      if (!k) return null;
+      if (!seen.has(r.ref)) { seen.add(r.ref); n[k] = (n[k] || 0) + 1; }
+      return { hex: parseInt(css[k].slice(1), 16), m: 'solid' };
+    });
+    const lg = $('[data-bind="th-legend"]'); lg.textContent = '';
+    for (const c of TH) lg.append(el('li', {}, el('i', { style: `background:${c.css}` }), `${c.label} (${n[c.k] || 0})`));
+    lg.append(el('li', {}, el('i', { class: 'is-ghost', style: 'background:#b9bfc2' }), 'Intérieur ou hors du volume chauffé'));
+  });
+}
+function thermoFacts(row, add) {
+  const T = S.thermo, o = T && T.ouvrages[row.ref], pr = o && T.profils[o.p];
+  if (!pr) return;
+  const t = TH_PROFIL[o.p];
+  add('Rôle thermique', pr.titre);
+  if (t && t.u && !(pr.lignes || []).some(l => /^Coefficient U/.test(l.label))) add('Coefficient U (calculé depuis R)', `≈ ${t.u.toFixed(2).replace('.', ',')} W/m².K`);
+  for (const l of pr.lignes || []) {
+    if (!/^(Coefficient|Résistance|Isolant|Isolation|Composition|Pont thermique|Vitrage|Pset IFC)/.test(l.label)) continue;
+    add(l.label, l.valeur || 'Non fourni au DCE : renvoyé à l\'étude thermique, absente du dossier');
+  }
+}
+
 function setView(v) {
   S.view = v;
   $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   $('[data-bind="time"]').hidden = v !== 'avancement';
   $('[data-bind="dash"]').hidden = v !== 'avancement';
-  if (v === 'avancement') paint(); else { stop(); S.viewer?.setStatusView(null); if (S.current) showPanel(S.current); }
+  $('[data-bind="thermo"]').hidden = v !== 'thermique';
+  if (v === 'avancement') paint();
+  else if (v === 'thermique') { stop(); loadThermo().then(() => { paintThermo(); if (S.current) showPanel(S.current); }); }
+  else { stop(); S.viewer?.setStatusView(null); if (S.current) showPanel(S.current); }
 }
 function setDay(n) {
   S.day = Math.max(S.dmin, Math.min(S.dmax, Math.round(n)));
@@ -239,6 +298,10 @@ function tourSteps() {
       p: "Un éditeur connecté change le statut, ajoute une photo ou une réserve depuis son téléphone ; l'historique garde qui a fait quoi et quand. A2 PM 106 est déjà suivi en ligne : son statut vient de la base de données, pas du scénario.",
       m: 'Depuis son téléphone, un éditeur change le statut, ajoute une photo ou une réserve ; l\'historique garde qui a fait quoi. A2 PM 106 est déjà suivi en ligne.', obj: pm, cta: fiche && { ...fiche, label: 'Voir le suivi d\'A2 PM 106' },
       go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
+    { t: 'La performance thermique dans la maquette',
+      p: "Chaque paroi prend la couleur de son coefficient U, tiré du DCE pour la tour A1 et calculé pour la variante de la tour A2. Isolée par l'extérieur, la tour A2 passe de l'orange au vert. Les balcons en rouge sont les ponts thermiques qui restent. Un clic donne la valeur, sa source et la propriété IFC correspondante.",
+      m: 'Chaque paroi prend la couleur de son coefficient U : la tour A2, isolée par l\'extérieur, passe de l\'orange au vert ; les balcons en rouge restent des ponts thermiques.',
+      go: () => { closeRebar(); stop(); hidePanel(); $('#ex-search').value = ''; setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); S.viewer?.clearSelection(); S.viewer?.overview?.(); setView('thermique'); } },
     { t: 'Après la livraison : le jumeau énergétique',
       p: "Les mêmes tours, une fois habitées. Le jumeau énergétique éclaire chaque logement selon sa consommation, signale les anomalies et compare la tour A1 du DCE à la variante A2 du groupe. Il a son propre site, relié à celui-ci par la barre du haut.",
       m: 'Une fois les tours habitées, le jumeau énergétique suit la consommation de chaque logement et compare A1 et A2. Il a son propre site.',
