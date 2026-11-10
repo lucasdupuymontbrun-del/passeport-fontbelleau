@@ -123,7 +123,7 @@ const TH = [
   { k: 'u1', label: 'U ≤ 0,17 W/m².K : très isolé', css: '#1b7a4e' },
   { k: 'u2', label: 'U de 0,17 à 0,22', css: '#6dbb85' },
   { k: 'u3', label: 'U de 0,22 à 0,30', css: '#f0a43a' },
-  { k: 'pont', label: 'Pont thermique : jonction balcon-façade sans rupteur', css: '#d03b3b' },
+  { k: 'pont', label: 'Pont thermique : jonction balcon-façade sans rupteur (tour A1)', css: '#d03b3b' },
   { k: 'uw', label: 'Fenêtre : Uw absent du DCE', css: '#8fa9c8' },
   { k: 'equip', label: 'Équipement de la variante', css: '#6a4ba0' },
 ];
@@ -138,7 +138,8 @@ function thClass(prof) {
   return t.k || (t.u <= 0.17 ? 'u1' : t.u <= 0.22 ? 'u2' : 'u3');
 }
 // laissés en gris dans cette vue (choix du groupe, 10/11/2026) : dalle haute du parking et balcons ;
-// le pont thermique des balcons est montré par un trait rouge à la jonction avec la façade (viewer.setMarks)
+// le pont thermique des balcons de la tour A1 est montré par un trait rouge à la jonction avec la façade (viewer.setMarks) ;
+// la tour A2 (variante) n'a plus de pont thermique aux balcons
 const thGris = (ref, prof) => prof === 'parking_ph' || prof === 'balcon';
 function loadThermo() {
   if (!S.thermoP) S.thermoP = fetch('data/energie/ouvrages.json').then(r => r.json()).then(d => (S.thermo = d));
@@ -154,7 +155,7 @@ async function paintThermo() {
     const n = {}, seen = new Set(), ponts = new Set();
     S.viewer.setStatusView((e) => {
       const r = S.byId.get(e.id), o = r && T.ouvrages[r.ref];
-      if (o && o.p === 'balcon') { ponts.add(e.id); if (!seen.has(r.ref)) { seen.add(r.ref); n.pont = (n.pont || 0) + 1; } }
+      if (o && o.p === 'balcon' && r.ref.startsWith('A1')) { ponts.add(e.id); if (!seen.has(r.ref)) { seen.add(r.ref); n.pont = (n.pont || 0) + 1; } }
       const k = o && !thGris(r.ref, o.p) && thClass(o.p);
       if (!k) return null;
       if (!seen.has(r.ref)) { seen.add(r.ref); n[k] = (n[k] || 0) + 1; }
@@ -168,7 +169,7 @@ async function paintThermo() {
 }
 function thermoFacts(row, add) {
   const T = S.thermo, o = T && T.ouvrages[row.ref], pr = o && T.profils[o.p];
-  if (!pr || o.p === 'parking_ph') return;
+  if (!pr || o.p === 'parking_ph' || (o.p === 'balcon' && !row.ref.startsWith('A1'))) return;
   const t = TH_PROFIL[o.p];
   add('Rôle thermique', pr.titre);
   if (t && t.u && !(pr.lignes || []).some(l => /^Coefficient U/.test(l.label))) add('Coefficient U (calculé depuis R)', `≈ ${t.u.toFixed(2).replace('.', ',')} W/m².K`);
@@ -306,8 +307,8 @@ function tourSteps() {
       m: 'Depuis son téléphone, un éditeur change le statut, ajoute une photo ou une réserve ; l\'historique garde qui a fait quoi. A2 PM 106 est déjà suivi en ligne.', obj: pm, cta: fiche && { ...fiche, label: 'Voir le suivi d\'A2 PM 106' },
       go: () => { stop(); setView('avancement'); setDay(S.today); selectRow(pm); } },
     { t: 'La performance thermique dans la maquette',
-      p: "Chaque paroi prend la couleur de son coefficient U, tiré du DCE pour la tour A1 et calculé pour la variante de la tour A2. Isolée par l'extérieur, la tour A2 passe de l'orange au vert. Les traits rouges marquent les ponts thermiques, là où les balcons traversent la façade sans rupteur. Un clic donne la valeur, sa source et la propriété IFC correspondante.",
-      m: 'Chaque paroi prend la couleur de son coefficient U : la tour A2, isolée par l\'extérieur, passe de l\'orange au vert ; les traits rouges marquent les ponts thermiques des balcons.',
+      p: "Chaque paroi prend la couleur de son coefficient U, tiré du DCE pour la tour A1 et calculé pour la variante de la tour A2. Isolée par l'extérieur, la tour A2 passe de l'orange au vert. Les traits rouges marquent les ponts thermiques de la tour A1, là où les balcons traversent la façade sans rupteur ; la tour A2 n'en a plus. Un clic donne la valeur, sa source et la propriété IFC correspondante.",
+      m: 'Chaque paroi prend la couleur de son coefficient U : la tour A2, isolée par l\'extérieur, passe de l\'orange au vert ; les traits rouges marquent les ponts thermiques des balcons de la tour A1.',
       go: () => { closeRebar(); stop(); hidePanel(); $('#ex-search').value = ''; setZone('ALL', { silent: true }); S.viewer?.setFilter('ALL', null); S.viewer?.clearSelection(); S.viewer?.overview?.(); setView('thermique'); } },
     { t: 'Après la livraison : le jumeau énergétique',
       p: "Les mêmes tours, une fois habitées. Le jumeau énergétique éclaire chaque logement selon sa consommation, signale les anomalies et compare la tour A1 du DCE à la variante A2 du groupe. Il a son propre site, relié à celui-ci par la barre du haut.",
