@@ -114,7 +114,7 @@
     </ul>
   </nav>
 
-  <section class="sec" id="identite" aria-labelledby="h-identite">
+  <section class="sec" id="identite" aria-labelledby="h-identite" data-fold="Afficher l'identité complète">
     <header class="sec-head">
       <h2 id="h-identite">Identité de l'ouvrage</h2>
       <p>Chaque valeur indique d'où elle vient et son niveau de fiabilité.</p>
@@ -159,7 +159,7 @@
     <div class="sec-body" data-bind="energie">Chargement des données énergétiques…</div>
   </section>
 
-  <section class="sec" id="documents" aria-labelledby="h-docs">
+  <section class="sec" id="documents" aria-labelledby="h-docs" data-fold="Afficher les documents">
     <header class="sec-head">
       <h2 id="h-docs">Documents techniques</h2>
       <p>Les pièces du DCE s'ouvrent après connexion. Les documents absents du dossier sont listés pour être demandés.</p>
@@ -168,7 +168,7 @@
     <div class="sec-body" data-bind="documents"></div>
   </section>
 
-  <section class="sec" id="approvisionnement" aria-labelledby="h-appro">
+  <section class="sec" id="approvisionnement" aria-labelledby="h-appro" data-fold="Afficher l'approvisionnement">
     <header class="sec-head">
       <h2 id="h-appro">Approvisionnement et commande</h2>
       <p>Aucune pièce de marché ni bon de commande dans le dossier : cette rubrique suit un scénario fictif.</p>
@@ -332,5 +332,6 @@
     <p class="qr-note" data-bind="qr-note" hidden></p>
   </div>
 </dialog>
+<script type="module" src="../assets/js/fold.js"></script>
 </body>
 </html>

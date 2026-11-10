@@ -812,3 +812,18 @@ li.empty { padding: 4px 0; }
   .sitenav a { flex: 1; padding: 0 8px; font-size: 13.5px; }
 }
 @media print { .sitenav { display: none; } }
+
+/* ---------- rubriques repliables sur téléphone (assets/js/fold.js, identique dans les deux dépôts) ---------- */
+.fold-btn { display: none; }
+@media (max-width: 760px) {
+  .sec[data-fold] .fold-btn {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; min-height: 42px; padding: 0 16px;
+    border-radius: 99px; border: 1px solid var(--graphite); background: var(--blanc); color: var(--graphite);
+    font: inherit; font-weight: 650; font-size: 14.5px; cursor: pointer;
+  }
+  .fold-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; transition: transform .2s; }
+  .sec[data-fold].is-open .fold-btn svg { transform: rotate(180deg); }
+  .sec[data-fold]:not(.is-open) > .sec-body { display: none; }
+  .sec[data-fold]:not(.is-open) > .sec-head > :not(h2):not(p):not(.fold-btn) { display: none; }
+}
+@media print { .sec[data-fold] > .sec-body { display: block !important; } .fold-btn { display: none !important; } }
