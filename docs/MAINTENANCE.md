@@ -225,7 +225,7 @@ Ordre de mise à jour après une modification de la maquette : 1) régénérer c
 
 ## Vue « Performance thermique » de la maquette (10/11/2026)
 
-- Bouton « Performance thermique » à côté de « Maquette » et « Avancement 4D » : chaque paroi prend la couleur de son coefficient U (W/m².K). Tour A1 : doublage intérieur, U 0,27 (étude thermique RT 2012) ; tour A2 : ITE, U ≈ 0,21 ; planchers et toitures : U calculé depuis la résistance R du CCTP (+ Rsi + Rse + dalle) ; balcons sans rupteur : pont thermique ; fenêtres : Uw absent du DCE ; extracteurs et capteurs de la variante repérés.
+- Bouton « Performance thermique » à côté de « Maquette » et « Avancement 4D » : chaque paroi prend la couleur de son coefficient U (W/m².K). Tour A1 : doublage intérieur, U 0,27 (étude thermique RT 2012) ; tour A2 : ITE, U ≈ 0,21 ; planchers et toitures : U calculé depuis la résistance R du CCTP (+ Rsi + Rse + dalle) ; balcons sans rupteur de la tour A1 : pont thermique ; dalle haute du parking et balcons de la tour A2 laissés en gris (choix du groupe) ; fenêtres : Uw absent du DCE ; extracteurs et capteurs de la variante repérés.
 - Données : `data/energie/ouvrages.json` (profil thermique de chaque ouvrage, écrit par le générateur du jumeau). Classes et valeurs : `TH` et `TH_PROFIL` dans `assets/js/explore.js`.
 - Un clic sur une paroi ajoute au résumé son rôle thermique, U, sa composition et la propriété IFC correspondante (Pset_WallCommon.ThermalTransmittance).
 - La visite guidée a une étape « La performance thermique dans la maquette », avant celle du jumeau.
